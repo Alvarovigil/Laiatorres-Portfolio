@@ -1,65 +1,66 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { BlurStage } from "@/components/blur-stage";
+import { ArchiveChrome } from "@/components/archive-chrome";
+
+// Portada: composición editorial asimétrica con el trabajo real (Julia
+// Perfumeries). Cada imagen conserva su proporción nativa (sin recortes) y se
+// posiciona en absoluto sobre un lienzo escalable (paddingTop = alto del lienzo).
+const BASE = "/projects";
+const CANVAS_PADDING_TOP = "460%";
+
+type Img = { src: string; caption: string; alt: string; left: string; top: string; width: string; aspectRatio: string };
+
+// Composición editorial asimétrica — imágenes más grandes (anchos 32–58%),
+// mismo ritmo izquierda/derecha y orden que la versión anterior. El lienzo se
+// alarga (460%) para recolocar sin solapes.
+const images: Img[] = [
+  { src: `${BASE}/verano-2025/01-w.jpg`,         caption: "Verano 2025",        alt: "Julia Perfumeries — Verano",        left: "1%",  top: "4%",  width: "56%", aspectRatio: "1920/1080" },
+  { src: `${BASE}/dia-de-la-madre-2025/01-w.jpg`, caption: "Día de la Madre 2025", alt: "Julia Perfumeries — Día de la Madre", left: "58%", top: "7%",  width: "38%", aspectRatio: "5928/7000" },
+  { src: `${BASE}/navidad-2024/02-w.jpg`,        caption: "Navidad 2024",       alt: "Julia Perfumeries — Navidad",       left: "1%",  top: "16%", width: "34%", aspectRatio: "2540/3000" },
+  { src: `${BASE}/back-to-beauty-2025/01-w.jpg`,  caption: "Back to Beauty 2025", alt: "Julia Perfumeries — Back to Beauty", left: "20%", top: "26%", width: "46%", aspectRatio: "1920/1080" },
+  { src: `${BASE}/verano-2025/04-w.jpg`,         caption: "Verano 2025",        alt: "Julia Perfumeries — Verano",        left: "68%", top: "24%", width: "32%", aspectRatio: "2964/3500" },
+  { src: `${BASE}/navidad-2024/01-w.jpg`,        caption: "Navidad 2024",       alt: "Julia Perfumeries — Navidad",       left: "1%",  top: "36%", width: "58%", aspectRatio: "3000/1687" },
+  { src: `${BASE}/dia-de-la-madre-2025/02-w.jpg`, caption: "Día de la Madre 2025", alt: "Julia Perfumeries — Día de la Madre", left: "60%", top: "40%", width: "38%", aspectRatio: "5928/7000" },
+  { src: `${BASE}/verano-2025/02-w.jpg`,         caption: "Verano 2025",        alt: "Julia Perfumeries — Verano",        left: "8%",  top: "53%", width: "54%", aspectRatio: "1920/1080" },
+  { src: `${BASE}/back-to-beauty-2025/02-w.jpg`,  caption: "Back to Beauty 2025", alt: "Julia Perfumeries — Back to Beauty", left: "54%", top: "61%", width: "44%", aspectRatio: "1920/1080" },
+  { src: `${BASE}/navidad-2024/03-w.jpg`,        caption: "Navidad 2024",       alt: "Julia Perfumeries — Navidad",       left: "1%",  top: "69%", width: "52%", aspectRatio: "3500/1968" },
+  { src: `${BASE}/verano-2025/03-w.jpg`,         caption: "Verano 2025",        alt: "Julia Perfumeries — Verano",        left: "54%", top: "70%", width: "44%", aspectRatio: "1920/1080" },
+  { src: `${BASE}/back-to-beauty-2025/03-w.jpg`,  caption: "Back to Beauty 2025", alt: "Julia Perfumeries — Back to Beauty", left: "16%", top: "83%", width: "58%", aspectRatio: "1920/1080" },
+];
+
+export default function Portfolio() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <BlurStage>
+      {(navigate) => (
+        <div className="bg-white min-h-screen w-full">
+          {/* Chrome de archivo — barras fijas arriba/abajo con texto en las esquinas */}
+          <ArchiveChrome onHome={() => navigate("/")} bottomCenter="Selected Work — 2024 / 2025" />
+
+          {/* Lienzo scrollable — composición editorial */}
+          <div className="w-full">
+            <div className="relative w-full" style={{ paddingTop: CANVAS_PADDING_TOP }}>
+              {images.map((img, i) => (
+                <div
+                  key={i}
+                  className="absolute cursor-pointer"
+                  style={{ left: img.left, top: img.top, width: img.width }}
+                  onClick={() => navigate("/project/julia-perfumeries")}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-auto block hover:opacity-80 transition-opacity"
+                    style={{ aspectRatio: img.aspectRatio }}
+                  />
+                  <p className="mt-2 text-[11px] uppercase tracking-[0.05em] text-black/60">{img.caption}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+    </BlurStage>
   );
 }
