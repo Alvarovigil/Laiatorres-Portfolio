@@ -1,0 +1,3 @@
+# Heavy original source images (app serves only -w.jpg)
+public/projects/**/[0-9][0-9].png
+.git
