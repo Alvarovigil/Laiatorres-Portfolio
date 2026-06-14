@@ -83,6 +83,7 @@ export type EditorInitial = {
   description: string;
   chromeCenter: string;
   chromeBottom: string;
+  coverUrl: string;
   category: string;
   year: string;
   services: string[];
@@ -106,6 +107,9 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [description, setDescription] = useState(initial.description);
   const [chromeCenter, setChromeCenter] = useState(initial.chromeCenter);
   const [chromeBottom, setChromeBottom] = useState(initial.chromeBottom);
+  const [coverUrl, setCoverUrl] = useState(initial.coverUrl);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverRef = useRef<HTMLInputElement>(null);
   const [category, setCategory] = useState(initial.category);
   const [year, setYear] = useState(initial.year);
   const [services, setServices] = useState<string[]>(initial.services.length ? initial.services : [""]);
@@ -170,6 +174,25 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         setError(e instanceof Error ? e.message : "Error al subir imagen");
         setItems((prev) => prev.filter((it) => !(it.kind === "image" && it.localUrl === localUrl)));
       }
+    }
+  }
+
+  async function uploadCover(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    setCoverUploading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("slug", `${effectiveSlug || "tmp"}-cover`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
+      const { url } = await res.json();
+      setCoverUrl(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al subir la portada");
+    } finally {
+      setCoverUploading(false);
     }
   }
 
@@ -252,7 +275,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   // ---- guardar ----
   function save() {
     setError(null);
-    if (isUploading) {
+    if (isUploading || coverUploading) {
       setError("Espera a que terminen de subir las imágenes.");
       return;
     }
@@ -297,6 +320,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       description,
       chromeCenter,
       chromeBottom,
+      coverUrl,
       category,
       year,
       services,
@@ -368,8 +392,41 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         </div>
       </section>
 
-      {/* Meta de la ficha (V2): categoría, año, servicios */}
+      {/* Meta de la ficha (V2): portada, categoría, año, servicios */}
       <section className="grid gap-4">
+        <div className="grid gap-1.5">
+          <span className={label}>Portada (home)</span>
+          <div className="flex items-center gap-3">
+            <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded border border-border bg-muted">
+              {coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverUrl} alt="" className={`h-full w-full object-cover ${coverUploading ? "opacity-50" : ""}`} />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                  sin portada
+                </div>
+              )}
+            </div>
+            <button onClick={() => coverRef.current?.click()} className="text-sm text-muted-foreground hover:text-foreground">
+              {coverUploading ? "Subiendo…" : coverUrl ? "Cambiar" : "Subir imagen"}
+            </button>
+            {coverUrl ? (
+              <button onClick={() => setCoverUrl("")} className="text-sm text-destructive/80 hover:text-destructive">
+                Quitar
+              </button>
+            ) : null}
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])}
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Imagen y nombre que aparecen en la home. Si la dejas vacía, se usa la primera imagen de la galería.
+          </span>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-1.5">
             <span className={label}>Categoría</span>

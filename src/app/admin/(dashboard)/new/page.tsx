@@ -9,6 +9,7 @@ export default function NewProjectPage() {
         description: "",
         chromeCenter: "",
         chromeBottom: "",
+        coverUrl: "",
         category: "",
         year: "",
         services: [],

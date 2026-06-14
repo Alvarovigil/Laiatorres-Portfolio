@@ -21,6 +21,8 @@ export const projects = pgTable("projects", {
   chromeBottom: text("chrome_bottom").notNull().default(""),
   credits: jsonb("credits").$type<CreditGroups>().notNull().default([]),
   // Campos de la ficha V2 (estilo Taqta).
+  // Imagen de portada para la home (si está vacía, se usa la primera del proyecto).
+  coverUrl: text("cover_url").notNull().default(""),
   category: text("category").notNull().default(""),
   year: text("year").notNull().default(""),
   services: jsonb("services").$type<string[]>().notNull().default([]),

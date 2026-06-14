@@ -26,6 +26,7 @@ export type ProjectInput = {
   description: string;
   chromeCenter: string;
   chromeBottom: string;
+  coverUrl: string;
   category: string;
   year: string;
   services: string[];
@@ -80,6 +81,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         description: input.description.trim(),
         chromeCenter: input.chromeCenter.trim(),
         chromeBottom: input.chromeBottom.trim(),
+        coverUrl: input.coverUrl.trim(),
         category: input.category.trim(),
         year: input.year.trim(),
         services,
@@ -110,6 +112,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       description: input.description.trim(),
       chromeCenter: input.chromeCenter.trim(),
       chromeBottom: input.chromeBottom.trim(),
+      coverUrl: input.coverUrl.trim(),
       category: input.category.trim(),
       year: input.year.trim(),
       services,

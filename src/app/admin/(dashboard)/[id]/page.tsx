@@ -16,6 +16,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         description: project.description,
         chromeCenter: project.chromeCenter,
         chromeBottom: project.chromeBottom,
+        coverUrl: project.coverUrl,
         category: project.category,
         year: project.year,
         services: project.services,
