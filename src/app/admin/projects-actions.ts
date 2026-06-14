@@ -4,12 +4,14 @@ import { del } from "@vercel/blob";
 import { asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { images, projects, type CreditGroups, type ImageLayout } from "@/db/schema";
+import { images, projects, type CreditGroups, type ImageLayout, type MediaKind, type VideoMode } from "@/db/schema";
 import { requireAuth } from "@/lib/session";
 import { slugify } from "@/lib/slug";
 
 export type ImageInput = {
   url: string;
+  kind: MediaKind;
+  videoMode: VideoMode;
   alt: string;
   width: number | null;
   height: number | null;
@@ -141,6 +143,8 @@ async function replaceImages(projectId: string, imgs: ImageInput[]) {
       imgs.map((i, idx) => ({
         projectId,
         url: i.url,
+        kind: i.kind,
+        videoMode: i.videoMode,
         alt: i.alt.trim(),
         width: i.width,
         height: i.height,

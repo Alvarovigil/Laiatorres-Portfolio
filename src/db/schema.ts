@@ -6,6 +6,10 @@ import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, index } from "
 export type Credit = { label: string; value: string };
 export type CreditGroups = Credit[][];
 export type ImageLayout = "wide" | "pair" | "single";
+export type MediaKind = "image" | "video";
+// Cómo se reproduce un vídeo: "ambient" = autoplay + bucle + sin sonido;
+// "player" = con controles y sonido.
+export type VideoMode = "ambient" | "player";
 
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -35,7 +39,10 @@ export const images = pgTable(
     projectId: uuid("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
+    // Para imágenes: URL del Blob. Para vídeos: el enlace (YouTube/Vimeo/.mp4).
     url: text("url").notNull(),
+    kind: text("kind", { enum: ["image", "video"] }).notNull().default("image"),
+    videoMode: text("video_mode", { enum: ["ambient", "player"] }).notNull().default("ambient"),
     alt: text("alt").notNull().default(""),
     width: integer("width"),
     height: integer("height"),

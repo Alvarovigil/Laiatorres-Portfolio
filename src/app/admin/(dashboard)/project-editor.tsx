@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import type { CreditGroups, ImageLayout } from "@/db/schema";
+import type { CreditGroups, ImageLayout, VideoMode } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import { saveProject, type ImageInput, type ProjectInput } from "../projects-actions";
 
-// La galería es una lista ordenada de dos tipos de elemento: líneas de SECCIÓN
-// e IMÁGENES. Cada imagen pertenece a la sección de la línea que tenga encima.
+// La galería es una lista ordenada de 3 tipos de elemento: líneas de SECCIÓN,
+// IMÁGENES (subidas al Blob) y VÍDEOS (por enlace). Cada medio pertenece a la
+// sección de la línea que tenga encima.
 type ImageItem = {
   kind: "image";
   key: string;
@@ -22,32 +23,44 @@ type ImageItem = {
   uploading?: boolean;
   localUrl?: string;
 };
+type VideoItem = {
+  kind: "video";
+  key: string;
+  url: string;
+  alt: string;
+  layout: ImageLayout;
+  videoMode: VideoMode;
+};
 type SectionItem = { kind: "section"; key: string; label: string };
-type Item = ImageItem | SectionItem;
+type Item = ImageItem | VideoItem | SectionItem;
 
 // Claves estables y deterministas (mismo orden en SSR e hidratación).
 let _uid = 0;
 const uid = () => `it-${_uid++}`;
 
-// Reconstruye la lista intercalada a partir de las imágenes guardadas: inserta
-// una línea de sección cada vez que cambia la etiqueta de sección.
-function buildInitialItems(images: ImageInput[]): Item[] {
+// Reconstruye la lista intercalada a partir de los medios guardados: inserta una
+// línea de sección cada vez que cambia la etiqueta de sección.
+function buildInitialItems(media: ImageInput[]): Item[] {
   const out: Item[] = [];
   let prev: string | null = null;
-  for (const im of images) {
-    if (im.section !== prev) {
-      if (im.section) out.push({ kind: "section", key: uid(), label: im.section });
-      prev = im.section;
+  for (const m of media) {
+    if (m.section !== prev) {
+      if (m.section) out.push({ kind: "section", key: uid(), label: m.section });
+      prev = m.section;
     }
-    out.push({
-      kind: "image",
-      key: uid(),
-      url: im.url,
-      alt: im.alt,
-      width: im.width,
-      height: im.height,
-      layout: im.layout,
-    });
+    if (m.kind === "video") {
+      out.push({ kind: "video", key: uid(), url: m.url, alt: m.alt, layout: m.layout, videoMode: m.videoMode });
+    } else {
+      out.push({
+        kind: "image",
+        key: uid(),
+        url: m.url,
+        alt: m.alt,
+        width: m.width,
+        height: m.height,
+        layout: m.layout,
+      });
+    }
   }
   return out;
 }
@@ -56,6 +69,11 @@ const LAYOUTS: { value: ImageLayout; label: string }[] = [
   { value: "wide", label: "Ancho" },
   { value: "pair", label: "Par" },
   { value: "single", label: "Individual" },
+];
+
+const VIDEO_MODES: { value: VideoMode; label: string }[] = [
+  { value: "ambient", label: "Ambiente (auto, bucle, sin sonido)" },
+  { value: "player", label: "Reproductor (controles, sonido)" },
 ];
 
 export type EditorInitial = {
@@ -98,7 +116,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [items, setItems] = useState<Item[]>(() => buildInitialItems(initial.images));
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const imageCount = items.reduce((n, it) => n + (it.kind === "image" ? 1 : 0), 0);
+  const mediaCount = items.reduce((n, it) => n + (it.kind === "section" ? 0 : 1), 0);
   const isUploading = items.some((it) => it.kind === "image" && it.uploading);
 
   const effectiveSlug = slugTouched ? slug : slugify(name);
@@ -175,6 +193,19 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     );
   }
 
+  function patchVideo(index: number, patch: Partial<VideoItem>) {
+    setItems((prev) =>
+      prev.map((it, i) => (i === index && it.kind === "video" ? { ...it, ...patch } : it)),
+    );
+  }
+
+  function addVideo() {
+    setItems((prev) => [
+      ...prev,
+      { kind: "video", key: uid(), url: "", alt: "", layout: "wide", videoMode: "ambient" },
+    ]);
+  }
+
   function setSectionLabel(index: number, labelValue: string) {
     setItems((prev) =>
       prev.map((it, i) => (i === index && it.kind === "section" ? { ...it, label: labelValue } : it)),
@@ -234,8 +265,24 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         currentSection = it.label.trim();
         continue;
       }
+      if (it.kind === "video") {
+        if (!it.url.trim()) continue; // ignora vídeos sin enlace
+        images.push({
+          url: it.url.trim(),
+          kind: "video",
+          videoMode: it.videoMode,
+          alt: it.alt,
+          width: null,
+          height: null,
+          section: currentSection,
+          layout: it.layout,
+        });
+        continue;
+      }
       images.push({
         url: it.url,
+        kind: "image",
+        videoMode: "ambient",
         alt: it.alt,
         width: it.width,
         height: it.height,
@@ -370,13 +417,16 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       {/* Galería: lista mixta de líneas de sección + imágenes */}
       <section className="grid gap-3">
         <div className="flex items-center justify-between">
-          <span className={label}>Galería ({imageCount})</span>
+          <span className={label}>Galería ({mediaCount})</span>
           <div className="flex items-center gap-3 text-sm">
             <button onClick={addSection} className="text-muted-foreground hover:text-foreground">
               + Sección
             </button>
             <button onClick={() => fileRef.current?.click()} className="text-muted-foreground hover:text-foreground">
               + Imágenes
+            </button>
+            <button onClick={addVideo} className="text-muted-foreground hover:text-foreground">
+              + Vídeo
             </button>
           </div>
         </div>
@@ -428,6 +478,51 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
               );
             }
 
+            if (it.kind === "video") {
+              return (
+                <li key={it.key} className="flex items-start gap-3 rounded-lg border border-border p-2">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+                    ▶
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <input
+                      className={field}
+                      placeholder="Enlace del vídeo (YouTube, Vimeo o .mp4)"
+                      value={it.url}
+                      onChange={(e) => patchVideo(i, { url: e.target.value })}
+                    />
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                      <span className="text-[11px] text-muted-foreground">Modo</span>
+                      <select
+                        className={cn(field, "w-auto min-w-0 flex-1")}
+                        value={it.videoMode}
+                        onChange={(e) => patchVideo(i, { videoMode: e.target.value as VideoMode })}
+                      >
+                        {VIDEO_MODES.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-[11px] text-muted-foreground">Tamaño</span>
+                      <select
+                        className={cn(field, "w-32 shrink-0")}
+                        value={it.layout}
+                        onChange={(e) => patchVideo(i, { layout: e.target.value as ImageLayout })}
+                      >
+                        {LAYOUTS.map((l) => (
+                          <option key={l.value} value={l.value}>
+                            {l.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {controls}
+                </li>
+              );
+            }
+
             return (
               <li key={it.key} className="flex items-start gap-3 rounded-lg border border-border p-2">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
@@ -470,9 +565,11 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         </ul>
 
         <p className="text-xs text-muted-foreground">
-          Añade una <b>línea de sección</b> y arrastra debajo sus imágenes: todas las fotos bajo una línea
-          pertenecen a esa sección hasta la siguiente. El <b>tamaño</b> define el bloque: “Ancho” ocupa todo,
-          “Individual” media columna, y dos “Par” seguidas van juntas en una fila.
+          Añade una <b>línea de sección</b> y coloca debajo sus imágenes y vídeos: todo lo que esté bajo una
+          línea pertenece a esa sección hasta la siguiente. El <b>tamaño</b> define el bloque (“Ancho” ocupa
+          todo, “Individual” media columna, dos “Par” seguidas van juntas). Los <b>vídeos</b> van por enlace
+          (no ocupan tu almacén): elige <b>Ambiente</b> (auto, bucle, sin sonido) o <b>Reproductor</b>
+          (controles y sonido).
         </p>
       </section>
 

@@ -23,6 +23,8 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         published: project.published,
         images: project.images.map((i) => ({
           url: i.url,
+          kind: i.kind,
+          videoMode: i.videoMode,
           alt: i.alt,
           width: i.width,
           height: i.height,

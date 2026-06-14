@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { VideoMode } from "@/db/schema";
+import { videoEmbed } from "@/lib/video";
 
 // Ficha de proyecto estilo andreaarques.com/Taqta (Cargo):
 //  · Mucho aire arriba; navbar (igual que la home) a media altura.
@@ -17,28 +19,64 @@ const STICK_BASE = 12; // offset del 1er separador respecto a la línea de Laia 
 const STICK_STEP = 22; // separación al apilarse (px) = altura del separador
 
 export type Credit = { label: string; value: string };
+export type Media = { url: string; kind: "image" | "video"; videoMode: VideoMode; alt?: string };
 export type Block =
-  | { type: "wide"; src: string; ratio?: number }
-  | { type: "single"; src: string; ratio?: number }
-  | { type: "pair"; src: [string, string]; ratio?: number };
+  | { type: "wide"; media: Media; ratio?: number }
+  | { type: "single"; media: Media; ratio?: number }
+  | { type: "pair"; media: [Media, Media]; ratio?: number };
 export type Section = { label: string; blocks: Block[] };
 
-function Cell({ src, ratio }: { src: string; ratio: number }) {
+function Cell({ media, ratio }: { media: Media; ratio: number }) {
   return (
-    <div style={{ aspectRatio: String(ratio) }} className="w-full overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" className="h-full w-full object-cover" />
+    <div style={{ aspectRatio: String(ratio) }} className="w-full overflow-hidden bg-black/5">
+      {media.kind === "video" ? <VideoCell media={media} /> : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={media.url} alt={media.alt ?? ""} className="h-full w-full object-cover" />
+      )}
     </div>
   );
 }
 
+function VideoCell({ media }: { media: Media }) {
+  const embed = videoEmbed(media.url, media.videoMode);
+  if (embed.type === "file") {
+    return (
+      <video
+        src={embed.src}
+        className="h-full w-full object-cover"
+        playsInline
+        controls={!embed.ambient}
+        autoPlay={embed.ambient}
+        muted={embed.ambient}
+        loop={embed.ambient}
+      />
+    );
+  }
+  return (
+    <iframe
+      src={embed.src}
+      className="h-full w-full"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowFullScreen
+    />
+  );
+}
+
+// Para vídeos sin proporción conocida usamos 16/9 por defecto.
+function blockRatio(b: Block, fallback: number): number {
+  if (b.ratio) return b.ratio;
+  const m = b.type === "pair" ? b.media[0] : b.media;
+  return m.kind === "video" ? 16 / 9 : fallback;
+}
+
 function renderBlock(b: Block) {
-  if (b.type === "wide") return <Cell src={b.src} ratio={b.ratio ?? 16 / 9} />;
-  if (b.type === "single") return <Cell src={b.src} ratio={b.ratio ?? 4 / 5} />;
+  if (b.type === "wide") return <Cell media={b.media} ratio={blockRatio(b, 16 / 9)} />;
+  if (b.type === "single") return <Cell media={b.media} ratio={blockRatio(b, 4 / 5)} />;
+  const r = blockRatio(b, 4 / 5);
   return (
     <div className="grid grid-cols-2" style={{ gap: GUT }}>
-      <Cell src={b.src[0]} ratio={b.ratio ?? 4 / 5} />
-      <Cell src={b.src[1]} ratio={b.ratio ?? 4 / 5} />
+      <Cell media={b.media[0]} ratio={r} />
+      <Cell media={b.media[1]} ratio={r} />
     </div>
   );
 }
