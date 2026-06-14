@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Original full-res source images (unused by app; only -w.jpg are served)
 /public/projects/**/[0-9][0-9].png
+.env*.local

@@ -1,0 +1,89 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import type { Project } from "@/db/schema";
+import { deleteProject, reorderProjects, setPublished } from "../projects-actions";
+
+export function ProjectList({ projects }: { projects: Project[] }) {
+  const [items, setItems] = useState(projects);
+  const [pending, startTransition] = useTransition();
+
+  function move(index: number, dir: -1 | 1) {
+    const next = [...items];
+    const target = index + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setItems(next);
+    startTransition(() => reorderProjects(next.map((p) => p.id)));
+  }
+
+  function togglePublish(p: Project) {
+    setItems((prev) => prev.map((x) => (x.id === p.id ? { ...x, published: !x.published } : x)));
+    startTransition(() => setPublished(p.id, !p.published));
+  }
+
+  function remove(p: Project) {
+    if (!confirm(`¿Borrar "${p.name}"? Se eliminarán también sus imágenes.`)) return;
+    setItems((prev) => prev.filter((x) => x.id !== p.id));
+    startTransition(() => deleteProject(p.id));
+  }
+
+  return (
+    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border" data-pending={pending}>
+      {items.map((p, i) => (
+        <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+          <div className="flex flex-col">
+            <button
+              onClick={() => move(i, -1)}
+              disabled={i === 0}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-25"
+              aria-label="Subir"
+            >
+              ▲
+            </button>
+            <button
+              onClick={() => move(i, 1)}
+              disabled={i === items.length - 1}
+              className="text-muted-foreground hover:text-foreground disabled:opacity-25"
+              aria-label="Bajar"
+            >
+              ▼
+            </button>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <Link href={`/admin/${p.id}`} className="block truncate text-sm font-medium hover:underline">
+              {String(i + 1).padStart(2, "0")} · {p.name}
+            </Link>
+            <p className="truncate text-xs text-muted-foreground">/{p.slug}</p>
+          </div>
+
+          <button
+            onClick={() => togglePublish(p)}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              p.published
+                ? "bg-foreground/10 text-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {p.published ? "Publicado" : "Borrador"}
+          </button>
+
+          <Link
+            href={`/admin/${p.id}`}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Editar
+          </Link>
+          <button
+            onClick={() => remove(p)}
+            className="text-xs text-destructive/80 hover:text-destructive"
+          >
+            Borrar
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
