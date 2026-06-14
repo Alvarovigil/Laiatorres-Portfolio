@@ -1,16 +1,17 @@
 "use client";
 
 import { BlurStage } from "@/components/blur-stage";
-import { ProjectFicha, type Credit } from "@/components/project-ficha";
+import { ProjectTaqta, type Credit, type Section } from "@/components/project-taqta";
 
 export type ProjectViewData = {
   index: string;
   name: string;
-  description: string;
-  chromeCenter: string;
-  chromeBottom: string;
-  images: string[];
-  credits: Credit[][];
+  category: string;
+  year: string;
+  about: string[];
+  services: string[];
+  credits: Credit[];
+  sections: Section[];
   nextHref: string;
   nextLabel: string;
 };
@@ -19,15 +20,16 @@ export function ProjectView(data: ProjectViewData) {
   return (
     <BlurStage>
       {(navigate) => (
-        <ProjectFicha
+        <ProjectTaqta
           navigate={navigate}
-          chromeCenter={data.chromeCenter}
-          chromeBottom={data.chromeBottom}
-          index={data.index}
           name={data.name}
-          description={data.description}
-          images={data.images}
+          index={data.index}
+          category={data.category}
+          year={data.year}
+          about={data.about}
+          services={data.services}
           credits={data.credits}
+          sections={data.sections}
           nextHref={data.nextHref}
           nextLabel={data.nextLabel}
         />

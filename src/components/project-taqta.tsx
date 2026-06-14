@@ -126,7 +126,7 @@ export function ProjectTaqta({
       <div className="fixed inset-x-0 top-1/2 z-50 -translate-y-1/2 px-6" style={{ mixBlendMode: "difference", fontFamily: mono }}>
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/v2")}
+            onClick={() => navigate("/")}
             className="cursor-pointer border-none bg-transparent p-0 text-[11px] font-semibold uppercase tracking-[0.05em] text-white transition-opacity hover:opacity-50"
           >
             Laia Torres

@@ -5,6 +5,7 @@ import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, index } from "
 // (líneas en blanco entre grupos), igual que esperaba <ProjectFicha>.
 export type Credit = { label: string; value: string };
 export type CreditGroups = Credit[][];
+export type ImageLayout = "wide" | "pair" | "single";
 
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -15,6 +16,10 @@ export const projects = pgTable("projects", {
   chromeCenter: text("chrome_center").notNull().default(""),
   chromeBottom: text("chrome_bottom").notNull().default(""),
   credits: jsonb("credits").$type<CreditGroups>().notNull().default([]),
+  // Campos de la ficha V2 (estilo Taqta).
+  category: text("category").notNull().default(""),
+  year: text("year").notNull().default(""),
+  services: jsonb("services").$type<string[]>().notNull().default([]),
   // Orden en el archivo y número visible ("01"). El número se deriva del orden
   // al renderizar, pero guardamos sortOrder para poder reordenar.
   sortOrder: integer("sort_order").notNull().default(0),
@@ -34,6 +39,9 @@ export const images = pgTable(
     alt: text("alt").notNull().default(""),
     width: integer("width"),
     height: integer("height"),
+    // Agrupación y maquetación en la ficha V2.
+    section: text("section").notNull().default(""),
+    layout: text("layout", { enum: ["wide", "pair", "single"] }).notNull().default("single"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

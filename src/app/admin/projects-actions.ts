@@ -4,7 +4,7 @@ import { del } from "@vercel/blob";
 import { asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { images, projects, type CreditGroups } from "@/db/schema";
+import { images, projects, type CreditGroups, type ImageLayout } from "@/db/schema";
 import { requireAuth } from "@/lib/session";
 import { slugify } from "@/lib/slug";
 
@@ -13,6 +13,8 @@ export type ImageInput = {
   alt: string;
   width: number | null;
   height: number | null;
+  section: string;
+  layout: ImageLayout;
 };
 
 export type ProjectInput = {
@@ -22,6 +24,9 @@ export type ProjectInput = {
   description: string;
   chromeCenter: string;
   chromeBottom: string;
+  category: string;
+  year: string;
+  services: string[];
   credits: CreditGroups;
   published: boolean;
   images: ImageInput[];
@@ -37,7 +42,8 @@ function normalize(input: ProjectInput) {
     .map((group) => group.filter((c) => c.label.trim() || c.value.trim()))
     .filter((group) => group.length > 0);
   const imgs = (input.images ?? []).filter((i) => i.url.trim());
-  return { name, slug, credits, imgs };
+  const services = (input.services ?? []).map((s) => s.trim()).filter(Boolean);
+  return { name, slug, credits, imgs, services };
 }
 
 async function ensureUniqueSlug(slug: string, ignoreId?: string): Promise<string> {
@@ -57,7 +63,7 @@ async function ensureUniqueSlug(slug: string, ignoreId?: string): Promise<string
 export async function saveProject(input: ProjectInput): Promise<SaveResult> {
   await requireAuth();
 
-  const { name, slug: baseSlug, credits, imgs } = normalize(input);
+  const { name, slug: baseSlug, credits, imgs, services } = normalize(input);
   if (!name) return { ok: false, error: "El nombre es obligatorio." };
 
   const slug = await ensureUniqueSlug(baseSlug, input.id);
@@ -72,6 +78,9 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         description: input.description.trim(),
         chromeCenter: input.chromeCenter.trim(),
         chromeBottom: input.chromeBottom.trim(),
+        category: input.category.trim(),
+        year: input.year.trim(),
+        services,
         credits,
         published: input.published,
         updatedAt: new Date(),
@@ -99,6 +108,9 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       description: input.description.trim(),
       chromeCenter: input.chromeCenter.trim(),
       chromeBottom: input.chromeBottom.trim(),
+      category: input.category.trim(),
+      year: input.year.trim(),
+      services,
       credits,
       published: input.published,
       sortOrder: nextOrder,
@@ -132,6 +144,8 @@ async function replaceImages(projectId: string, imgs: ImageInput[]) {
         alt: i.alt.trim(),
         width: i.width,
         height: i.height,
+        section: i.section.trim(),
+        layout: i.layout,
         sortOrder: idx,
       })),
     );

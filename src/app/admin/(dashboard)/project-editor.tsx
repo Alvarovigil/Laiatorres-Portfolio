@@ -4,11 +4,59 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import type { CreditGroups } from "@/db/schema";
+import type { CreditGroups, ImageLayout } from "@/db/schema";
 import { slugify } from "@/lib/slug";
+import { cn } from "@/lib/utils";
 import { saveProject, type ImageInput, type ProjectInput } from "../projects-actions";
 
-type EditorImage = ImageInput & { uploading?: boolean; localUrl?: string };
+// La galería es una lista ordenada de dos tipos de elemento: líneas de SECCIÓN
+// e IMÁGENES. Cada imagen pertenece a la sección de la línea que tenga encima.
+type ImageItem = {
+  kind: "image";
+  key: string;
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+  layout: ImageLayout;
+  uploading?: boolean;
+  localUrl?: string;
+};
+type SectionItem = { kind: "section"; key: string; label: string };
+type Item = ImageItem | SectionItem;
+
+// Claves estables y deterministas (mismo orden en SSR e hidratación).
+let _uid = 0;
+const uid = () => `it-${_uid++}`;
+
+// Reconstruye la lista intercalada a partir de las imágenes guardadas: inserta
+// una línea de sección cada vez que cambia la etiqueta de sección.
+function buildInitialItems(images: ImageInput[]): Item[] {
+  const out: Item[] = [];
+  let prev: string | null = null;
+  for (const im of images) {
+    if (im.section !== prev) {
+      if (im.section) out.push({ kind: "section", key: uid(), label: im.section });
+      prev = im.section;
+    }
+    out.push({
+      kind: "image",
+      key: uid(),
+      url: im.url,
+      alt: im.alt,
+      width: im.width,
+      height: im.height,
+      layout: im.layout,
+    });
+  }
+  return out;
+}
+
+const LAYOUTS: { value: ImageLayout; label: string }[] = [
+  { value: "wide", label: "Ancho" },
+  { value: "pair", label: "Par" },
+  { value: "single", label: "Individual" },
+];
 
 export type EditorInitial = {
   id?: string;
@@ -17,6 +65,9 @@ export type EditorInitial = {
   description: string;
   chromeCenter: string;
   chromeBottom: string;
+  category: string;
+  year: string;
+  services: string[];
   credits: CreditGroups;
   published: boolean;
   images: ImageInput[];
@@ -37,12 +88,18 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [description, setDescription] = useState(initial.description);
   const [chromeCenter, setChromeCenter] = useState(initial.chromeCenter);
   const [chromeBottom, setChromeBottom] = useState(initial.chromeBottom);
+  const [category, setCategory] = useState(initial.category);
+  const [year, setYear] = useState(initial.year);
+  const [services, setServices] = useState<string[]>(initial.services.length ? initial.services : [""]);
   const [published, setPublished] = useState(initial.published);
   const [credits, setCredits] = useState<CreditGroups>(
     initial.credits.length ? initial.credits : [[{ label: "", value: "" }]],
   );
-  const [imgs, setImgs] = useState<EditorImage[]>(initial.images);
+  const [items, setItems] = useState<Item[]>(() => buildInitialItems(initial.images));
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const imageCount = items.reduce((n, it) => n + (it.kind === "image" ? 1 : 0), 0);
+  const isUploading = items.some((it) => it.kind === "image" && it.uploading);
 
   const effectiveSlug = slugTouched ? slug : slugify(name);
 
@@ -66,15 +123,18 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
     for (const file of list) {
       const { width, height, localUrl } = await readDimensions(file);
-      const placeholder: EditorImage = {
+      const placeholder: ImageItem = {
+        kind: "image",
+        key: uid(),
         url: "",
         alt: "",
         width: width || null,
         height: height || null,
+        layout: "single",
         uploading: true,
         localUrl,
       };
-      setImgs((prev) => [...prev, placeholder]);
+      setItems((prev) => [...prev, placeholder]);
 
       const form = new FormData();
       form.append("file", file);
@@ -83,18 +143,20 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         const res = await fetch("/api/admin/upload", { method: "POST", body: form });
         if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
         const { url } = await res.json();
-        setImgs((prev) =>
-          prev.map((i) => (i.localUrl === localUrl ? { ...i, url, uploading: false } : i)),
+        setItems((prev) =>
+          prev.map((it) =>
+            it.kind === "image" && it.localUrl === localUrl ? { ...it, url, uploading: false } : it,
+          ),
         );
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error al subir imagen");
-        setImgs((prev) => prev.filter((i) => i.localUrl !== localUrl));
+        setItems((prev) => prev.filter((it) => !(it.kind === "image" && it.localUrl === localUrl)));
       }
     }
   }
 
-  function moveImg(index: number, dir: -1 | 1) {
-    setImgs((prev) => {
+  function moveItem(index: number, dir: -1 | 1) {
+    setItems((prev) => {
       const next = [...prev];
       const t = index + dir;
       if (t < 0 || t >= next.length) return prev;
@@ -103,12 +165,35 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     });
   }
 
-  function removeImg(index: number) {
-    setImgs((prev) => prev.filter((_, i) => i !== index));
+  function removeItem(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function setAlt(index: number, alt: string) {
-    setImgs((prev) => prev.map((i, idx) => (idx === index ? { ...i, alt } : i)));
+  function patchImage(index: number, patch: Partial<ImageItem>) {
+    setItems((prev) =>
+      prev.map((it, i) => (i === index && it.kind === "image" ? { ...it, ...patch } : it)),
+    );
+  }
+
+  function setSectionLabel(index: number, labelValue: string) {
+    setItems((prev) =>
+      prev.map((it, i) => (i === index && it.kind === "section" ? { ...it, label: labelValue } : it)),
+    );
+  }
+
+  function addSection() {
+    setItems((prev) => [...prev, { kind: "section", key: uid(), label: "" }]);
+  }
+
+  // ---- servicios ----
+  function setService(index: number, v: string) {
+    setServices((prev) => prev.map((s, i) => (i === index ? v : s)));
+  }
+  function addService() {
+    setServices((prev) => [...prev, ""]);
+  }
+  function removeService(index: number) {
+    setServices((prev) => prev.filter((_, i) => i !== index));
   }
 
   // ---- créditos ----
@@ -136,9 +221,27 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   // ---- guardar ----
   function save() {
     setError(null);
-    if (imgs.some((i) => i.uploading)) {
+    if (isUploading) {
       setError("Espera a que terminen de subir las imágenes.");
       return;
+    }
+    // Recorre la lista en orden; cada imagen hereda la sección de la última línea
+    // de sección vista por encima.
+    let currentSection = "";
+    const images: ImageInput[] = [];
+    for (const it of items) {
+      if (it.kind === "section") {
+        currentSection = it.label.trim();
+        continue;
+      }
+      images.push({
+        url: it.url,
+        alt: it.alt,
+        width: it.width,
+        height: it.height,
+        section: currentSection,
+        layout: it.layout,
+      });
     }
     const input: ProjectInput = {
       id: initial.id,
@@ -147,9 +250,12 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       description,
       chromeCenter,
       chromeBottom,
+      category,
+      year,
+      services,
       credits,
       published,
-      images: imgs.map(({ url, alt, width, height }) => ({ url, alt, width, height })),
+      images,
     };
     startTransition(async () => {
       const res = await saveProject(input);
@@ -198,7 +304,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         <div className="grid gap-1.5">
           <span className={label}>Descripción</span>
           <textarea
-            className={`${field} h-32 resize-y py-2`}
+            className={cn(field, "h-32 resize-y py-2")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -215,16 +321,64 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         </div>
       </section>
 
-      {/* Imágenes */}
+      {/* Meta de la ficha (V2): categoría, año, servicios */}
+      <section className="grid gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-1.5">
+            <span className={label}>Categoría</span>
+            <input
+              className={field}
+              placeholder="Campañas estacionales"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <span className={label}>Año</span>
+            <input
+              className={field}
+              placeholder="2024 / 2025"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="grid gap-2">
+          <span className={label}>Servicios</span>
+          {services.map((s, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                className={cn(field, "min-w-0 flex-1")}
+                placeholder="Dirección de arte"
+                value={s}
+                onChange={(e) => setService(i, e.target.value)}
+              />
+              <button
+                onClick={() => removeService(i)}
+                className="px-1 text-destructive/80 hover:text-destructive"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          <button onClick={addService} className="justify-self-start text-xs text-muted-foreground hover:text-foreground">
+            + Añadir servicio
+          </button>
+        </div>
+      </section>
+
+      {/* Galería: lista mixta de líneas de sección + imágenes */}
       <section className="grid gap-3">
         <div className="flex items-center justify-between">
-          <span className={label}>Imágenes ({imgs.length})</span>
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            + Añadir
-          </button>
+          <span className={label}>Galería ({imageCount})</span>
+          <div className="flex items-center gap-3 text-sm">
+            <button onClick={addSection} className="text-muted-foreground hover:text-foreground">
+              + Sección
+            </button>
+            <button onClick={() => fileRef.current?.click()} className="text-muted-foreground hover:text-foreground">
+              + Imágenes
+            </button>
+          </div>
         </div>
 
         <div
@@ -248,31 +402,78 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         />
 
         <ul className="grid gap-2">
-          {imgs.map((img, i) => (
-            <li key={img.url || img.localUrl || i} className="flex items-center gap-3 rounded-lg border border-border p-2">
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded bg-muted">
-                {/* next/image no optimiza blobs locales; usamos <img> nativo aquí */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url || img.localUrl}
-                  alt=""
-                  className={`h-full w-full object-cover ${img.uploading ? "opacity-50" : ""}`}
-                />
+          {items.map((it, i) => {
+            const controls = (
+              <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground">
+                <button onClick={() => moveItem(i, -1)} disabled={i === 0} className="px-1 leading-none disabled:opacity-25">▲</button>
+                <button onClick={() => moveItem(i, 1)} disabled={i === items.length - 1} className="px-1 leading-none disabled:opacity-25">▼</button>
+                <button onClick={() => removeItem(i)} className="px-1 leading-none text-destructive/80 hover:text-destructive">✕</button>
               </div>
-              <input
-                className={`${field} flex-1`}
-                placeholder="Texto alternativo (alt)"
-                value={img.alt}
-                onChange={(e) => setAlt(i, e.target.value)}
-              />
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <button onClick={() => moveImg(i, -1)} disabled={i === 0} className="px-1 disabled:opacity-25">▲</button>
-                <button onClick={() => moveImg(i, 1)} disabled={i === imgs.length - 1} className="px-1 disabled:opacity-25">▼</button>
-                <button onClick={() => removeImg(i)} className="px-1 text-destructive/80 hover:text-destructive">✕</button>
-              </div>
-            </li>
-          ))}
+            );
+
+            if (it.kind === "section") {
+              return (
+                <li key={it.key} className="flex items-center gap-3 rounded-lg border border-border bg-muted/60 px-3 py-2">
+                  <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Sección
+                  </span>
+                  <input
+                    className={cn(field, "min-w-0 flex-1 bg-background font-medium")}
+                    placeholder="Nombre de la sección (p. ej. Verano 2025)"
+                    value={it.label}
+                    onChange={(e) => setSectionLabel(i, e.target.value)}
+                  />
+                  {controls}
+                </li>
+              );
+            }
+
+            return (
+              <li key={it.key} className="flex items-start gap-3 rounded-lg border border-border p-2">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
+                  {/* next/image no optimiza blobs locales; usamos <img> nativo aquí */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={it.url || it.localUrl}
+                    alt=""
+                    className={`h-full w-full object-cover ${it.uploading ? "opacity-50" : ""}`}
+                  />
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <input
+                    className={field}
+                    placeholder="Texto alternativo (alt)"
+                    value={it.alt}
+                    onChange={(e) => patchImage(i, { alt: e.target.value })}
+                  />
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <span className="text-[11px] text-muted-foreground">Tamaño</span>
+                    <select
+                      className={cn(field, "w-32 shrink-0")}
+                      value={it.layout}
+                      onChange={(e) => patchImage(i, { layout: e.target.value as ImageLayout })}
+                    >
+                      {LAYOUTS.map((l) => (
+                        <option key={l.value} value={l.value}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {controls}
+              </li>
+            );
+          })}
         </ul>
+
+        <p className="text-xs text-muted-foreground">
+          Añade una <b>línea de sección</b> y arrastra debajo sus imágenes: todas las fotos bajo una línea
+          pertenecen a esa sección hasta la siguiente. El <b>tamaño</b> define el bloque: “Ancho” ocupa todo,
+          “Individual” media columna, y dos “Par” seguidas van juntas en una fila.
+        </p>
       </section>
 
       {/* Créditos */}
@@ -283,13 +484,13 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
             {group.map((c, r) => (
               <div key={r} className="flex items-center gap-2">
                 <input
-                  className={`${field} w-40`}
+                  className={cn(field, "w-40 shrink-0")}
                   placeholder="Etiqueta"
                   value={c.label}
                   onChange={(e) => setCredit(g, r, "label", e.target.value)}
                 />
                 <input
-                  className={`${field} flex-1`}
+                  className={cn(field, "min-w-0 flex-1")}
                   placeholder="Valor"
                   value={c.value}
                   onChange={(e) => setCredit(g, r, "value", e.target.value)}
