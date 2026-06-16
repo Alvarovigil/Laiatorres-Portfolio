@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import type { CreditGroups, ImageLayout, VideoMode } from "@/db/schema";
 import { slugify } from "@/lib/slug";
@@ -119,6 +119,53 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   );
   const [items, setItems] = useState<Item[]>(() => buildInitialItems(initial.images));
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ---- reordenar arrastrando ----
+  // `draggingKey` activa `draggable` solo en el elemento cuyo asa se está
+  // sujetando (así no se interfiere con la selección de texto en los inputs).
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const dragFrom = useRef<number | null>(null);
+
+  function reorder(from: number, to: number) {
+    setItems((prev) => {
+      if (from === to || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }
+
+  function resetDrag() {
+    dragFrom.current = null;
+    setDraggingKey(null);
+    setOverIndex(null);
+  }
+
+  function itemDragProps(i: number, key: string) {
+    return {
+      draggable: draggingKey === key,
+      onDragStart: (e: DragEvent) => {
+        dragFrom.current = i;
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", key);
+      },
+      onDragEnter: () => {
+        if (dragFrom.current !== null) setOverIndex(i);
+      },
+      onDragOver: (e: DragEvent) => {
+        if (dragFrom.current !== null) e.preventDefault();
+      },
+      onDrop: (e: DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dragFrom.current !== null) reorder(dragFrom.current, i);
+        resetDrag();
+      },
+      onDragEnd: resetDrag,
+    };
+  }
 
   const mediaCount = items.reduce((n, it) => n + (it.kind === "section" ? 0 : 1), 0);
   const isUploading = items.some((it) => it.kind === "image" && it.uploading);
@@ -510,8 +557,25 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
 
         <ul className="grid gap-2">
           {items.map((it, i) => {
+            const dragging = draggingKey === it.key;
+            const isOver = overIndex === i && draggingKey !== null && !dragging;
+            const dragClass = cn(
+              "transition-opacity",
+              dragging && "opacity-40",
+              isOver && "ring-2 ring-ring ring-offset-1",
+            );
             const controls = (
               <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground">
+                <button
+                  type="button"
+                  aria-label="Arrastrar para reordenar"
+                  title="Arrastrar para reordenar"
+                  onMouseDown={() => setDraggingKey(it.key)}
+                  onTouchStart={() => setDraggingKey(it.key)}
+                  className="cursor-grab px-1 leading-none active:cursor-grabbing hover:text-foreground"
+                >
+                  ⠿
+                </button>
                 <button onClick={() => moveItem(i, -1)} disabled={i === 0} className="px-1 leading-none disabled:opacity-25">▲</button>
                 <button onClick={() => moveItem(i, 1)} disabled={i === items.length - 1} className="px-1 leading-none disabled:opacity-25">▼</button>
                 <button onClick={() => removeItem(i)} className="px-1 leading-none text-destructive/80 hover:text-destructive">✕</button>
@@ -520,7 +584,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
 
             if (it.kind === "section") {
               return (
-                <li key={it.key} className="flex items-center gap-3 rounded-lg border border-border bg-muted/60 px-3 py-2">
+                <li key={it.key} {...itemDragProps(i, it.key)} className={cn("flex items-center gap-3 rounded-lg border border-border bg-muted/60 px-3 py-2", dragClass)}>
                   <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                     Sección
                   </span>
@@ -537,7 +601,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
 
             if (it.kind === "video") {
               return (
-                <li key={it.key} className="flex items-start gap-3 rounded-lg border border-border p-2">
+                <li key={it.key} {...itemDragProps(i, it.key)} className={cn("flex items-start gap-3 rounded-lg border border-border p-2", dragClass)}>
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
                     ▶
                   </div>
@@ -581,7 +645,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
             }
 
             return (
-              <li key={it.key} className="flex items-start gap-3 rounded-lg border border-border p-2">
+              <li key={it.key} {...itemDragProps(i, it.key)} className={cn("flex items-start gap-3 rounded-lg border border-border p-2", dragClass)}>
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
                   {/* next/image no optimiza blobs locales; usamos <img> nativo aquí */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -623,7 +687,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
 
         <p className="text-xs text-muted-foreground">
           Añade una <b>línea de sección</b> y coloca debajo sus imágenes y vídeos: todo lo que esté bajo una
-          línea pertenece a esa sección hasta la siguiente. El <b>tamaño</b> define el bloque (“Ancho” ocupa
+          línea pertenece a esa sección hasta la siguiente. Reordena <b>arrastrando desde el asa (⠿)</b> o con
+          las flechas. El <b>tamaño</b> define el bloque (“Ancho” ocupa
           todo, “Individual” media columna, dos “Par” seguidas van juntas). Los <b>vídeos</b> van por enlace
           (no ocupan tu almacén): elige <b>Ambiente</b> (auto, bucle, sin sonido) o <b>Reproductor</b>
           (controles y sonido).
