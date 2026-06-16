@@ -20,6 +20,8 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         category: project.category,
         year: project.year,
         services: project.services,
+        agency: project.agency,
+        collabs: project.collabs,
         credits: project.credits,
         published: project.published,
         images: project.images.map((i) => ({
@@ -31,6 +33,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
           height: i.height,
           section: i.section,
           layout: i.layout,
+          align: i.align,
         })),
       }}
     />

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
-import type { CreditGroups, ImageLayout, VideoMode } from "@/db/schema";
+import type { Collab, CreditGroups, ImageAlign, ImageLayout, VideoMode } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import { saveProject, type ImageInput, type ProjectInput } from "../projects-actions";
@@ -20,6 +20,7 @@ type ImageItem = {
   width: number | null;
   height: number | null;
   layout: ImageLayout;
+  align: ImageAlign;
   uploading?: boolean;
   localUrl?: string;
 };
@@ -29,6 +30,7 @@ type VideoItem = {
   url: string;
   alt: string;
   layout: ImageLayout;
+  align: ImageAlign;
   videoMode: VideoMode;
 };
 type SectionItem = { kind: "section"; key: string; label: string };
@@ -49,7 +51,7 @@ function buildInitialItems(media: ImageInput[]): Item[] {
       prev = m.section;
     }
     if (m.kind === "video") {
-      out.push({ kind: "video", key: uid(), url: m.url, alt: m.alt, layout: m.layout, videoMode: m.videoMode });
+      out.push({ kind: "video", key: uid(), url: m.url, alt: m.alt, layout: m.layout, align: m.align, videoMode: m.videoMode });
     } else {
       out.push({
         kind: "image",
@@ -59,6 +61,7 @@ function buildInitialItems(media: ImageInput[]): Item[] {
         width: m.width,
         height: m.height,
         layout: m.layout,
+        align: m.align,
       });
     }
   }
@@ -69,6 +72,11 @@ const LAYOUTS: { value: ImageLayout; label: string }[] = [
   { value: "wide", label: "Ancho" },
   { value: "pair", label: "Par" },
   { value: "single", label: "Individual" },
+];
+
+const ALIGNS: { value: ImageAlign; label: string }[] = [
+  { value: "left", label: "Izquierda" },
+  { value: "right", label: "Derecha" },
 ];
 
 const VIDEO_MODES: { value: VideoMode; label: string }[] = [
@@ -87,6 +95,8 @@ export type EditorInitial = {
   category: string;
   year: string;
   services: string[];
+  agency: string;
+  collabs: Collab[];
   credits: CreditGroups;
   published: boolean;
   images: ImageInput[];
@@ -113,6 +123,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [category, setCategory] = useState(initial.category);
   const [year, setYear] = useState(initial.year);
   const [services, setServices] = useState<string[]>(initial.services.length ? initial.services : [""]);
+  const [agency, setAgency] = useState(initial.agency);
+  const [collabs, setCollabs] = useState<Collab[]>(initial.collabs);
   const [published, setPublished] = useState(initial.published);
   const [credits, setCredits] = useState<CreditGroups>(
     initial.credits.length ? initial.credits : [[{ label: "", value: "" }]],
@@ -200,6 +212,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         width: width || null,
         height: height || null,
         layout: "single",
+        align: "left",
         uploading: true,
         localUrl,
       };
@@ -272,7 +285,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   function addVideo() {
     setItems((prev) => [
       ...prev,
-      { kind: "video", key: uid(), url: "", alt: "", layout: "wide", videoMode: "ambient" },
+      { kind: "video", key: uid(), url: "", alt: "", layout: "wide", align: "left", videoMode: "ambient" },
     ]);
   }
 
@@ -295,6 +308,17 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   }
   function removeService(index: number) {
     setServices((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // ---- colabs (footer ficha V3) ----
+  function setCollab(index: number, key: "handle" | "href", v: string) {
+    setCollabs((prev) => prev.map((c, i) => (i === index ? { ...c, [key]: v } : c)));
+  }
+  function addCollab() {
+    setCollabs((prev) => [...prev, { handle: "", href: "" }]);
+  }
+  function removeCollab(index: number) {
+    setCollabs((prev) => prev.filter((_, i) => i !== index));
   }
 
   // ---- créditos ----
@@ -346,6 +370,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
           height: null,
           section: currentSection,
           layout: it.layout,
+          align: it.align,
         });
         continue;
       }
@@ -358,6 +383,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         height: it.height,
         section: currentSection,
         layout: it.layout,
+        align: it.align,
       });
     }
     const input: ProjectInput = {
@@ -371,6 +397,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       category,
       year,
       services,
+      agency,
+      collabs,
       credits,
       published,
       images,
@@ -516,6 +544,41 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
             + Añadir servicio
           </button>
         </div>
+        <div className="grid gap-1.5">
+          <span className={label}>Agencia / producción</span>
+          <input
+            className={field}
+            placeholder="Firma Branding&Innovation Agency"
+            value={agency}
+            onChange={(e) => setAgency(e.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">Aparece en el pie de la ficha: “Agency and production: …”.</span>
+        </div>
+        <div className="grid gap-2">
+          <span className={label}>Colabs (footer)</span>
+          {collabs.map((c, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                className={cn(field, "w-44 shrink-0")}
+                placeholder="@handle"
+                value={c.handle}
+                onChange={(e) => setCollab(i, "handle", e.target.value)}
+              />
+              <input
+                className={cn(field, "min-w-0 flex-1")}
+                placeholder="https://instagram.com/handle"
+                value={c.href}
+                onChange={(e) => setCollab(i, "href", e.target.value)}
+              />
+              <button onClick={() => removeCollab(i)} className="px-1 text-destructive/80 hover:text-destructive">
+                ✕
+              </button>
+            </div>
+          ))}
+          <button onClick={addCollab} className="justify-self-start text-xs text-muted-foreground hover:text-foreground">
+            + Añadir colab
+          </button>
+        </div>
       </section>
 
       {/* Galería: lista mixta de líneas de sección + imágenes */}
@@ -637,6 +700,22 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
                           </option>
                         ))}
                       </select>
+                      {it.layout === "single" ? (
+                        <>
+                          <span className="text-[11px] text-muted-foreground">Lado</span>
+                          <select
+                            className={cn(field, "w-32 shrink-0")}
+                            value={it.align}
+                            onChange={(e) => patchVideo(i, { align: e.target.value as ImageAlign })}
+                          >
+                            {ALIGNS.map((a) => (
+                              <option key={a.value} value={a.value}>
+                                {a.label}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      ) : null}
                     </div>
                   </div>
                   {controls}
@@ -676,6 +755,22 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
                         </option>
                       ))}
                     </select>
+                    {it.layout === "single" ? (
+                      <>
+                        <span className="text-[11px] text-muted-foreground">Lado</span>
+                        <select
+                          className={cn(field, "w-32 shrink-0")}
+                          value={it.align}
+                          onChange={(e) => patchImage(i, { align: e.target.value as ImageAlign })}
+                        >
+                          {ALIGNS.map((a) => (
+                            <option key={a.value} value={a.value}>
+                              {a.label}
+                            </option>
+                          ))}
+                        </select>
+                      </>
+                    ) : null}
                   </div>
                 </div>
 

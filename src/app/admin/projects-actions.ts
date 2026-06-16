@@ -4,7 +4,16 @@ import { del } from "@vercel/blob";
 import { asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { images, projects, type CreditGroups, type ImageLayout, type MediaKind, type VideoMode } from "@/db/schema";
+import {
+  images,
+  projects,
+  type Collab,
+  type CreditGroups,
+  type ImageAlign,
+  type ImageLayout,
+  type MediaKind,
+  type VideoMode,
+} from "@/db/schema";
 import { requireAuth } from "@/lib/session";
 import { slugify } from "@/lib/slug";
 
@@ -17,6 +26,7 @@ export type ImageInput = {
   height: number | null;
   section: string;
   layout: ImageLayout;
+  align: ImageAlign;
 };
 
 export type ProjectInput = {
@@ -30,6 +40,8 @@ export type ProjectInput = {
   category: string;
   year: string;
   services: string[];
+  agency: string;
+  collabs: Collab[];
   credits: CreditGroups;
   published: boolean;
   images: ImageInput[];
@@ -46,7 +58,11 @@ function normalize(input: ProjectInput) {
     .filter((group) => group.length > 0);
   const imgs = (input.images ?? []).filter((i) => i.url.trim());
   const services = (input.services ?? []).map((s) => s.trim()).filter(Boolean);
-  return { name, slug, credits, imgs, services };
+  // Filtra colabs sin handle.
+  const collabs: Collab[] = (input.collabs ?? [])
+    .map((c) => ({ handle: c.handle.trim(), href: c.href.trim() }))
+    .filter((c) => c.handle);
+  return { name, slug, credits, imgs, services, collabs };
 }
 
 async function ensureUniqueSlug(slug: string, ignoreId?: string): Promise<string> {
@@ -66,7 +82,7 @@ async function ensureUniqueSlug(slug: string, ignoreId?: string): Promise<string
 export async function saveProject(input: ProjectInput): Promise<SaveResult> {
   await requireAuth();
 
-  const { name, slug: baseSlug, credits, imgs, services } = normalize(input);
+  const { name, slug: baseSlug, credits, imgs, services, collabs } = normalize(input);
   if (!name) return { ok: false, error: "El nombre es obligatorio." };
 
   const slug = await ensureUniqueSlug(baseSlug, input.id);
@@ -85,6 +101,8 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         category: input.category.trim(),
         year: input.year.trim(),
         services,
+        agency: input.agency.trim(),
+        collabs,
         credits,
         published: input.published,
         updatedAt: new Date(),
@@ -116,6 +134,8 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       category: input.category.trim(),
       year: input.year.trim(),
       services,
+      agency: input.agency.trim(),
+      collabs,
       credits,
       published: input.published,
       sortOrder: nextOrder,
@@ -153,6 +173,7 @@ async function replaceImages(projectId: string, imgs: ImageInput[]) {
         height: i.height,
         section: i.section.trim(),
         layout: i.layout,
+        align: i.align,
         sortOrder: idx,
       })),
     );

@@ -13,6 +13,8 @@ export default function NewProjectPage() {
         category: "",
         year: "",
         services: [],
+        agency: "",
+        collabs: [],
         credits: [],
         published: false,
         images: [],

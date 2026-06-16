@@ -21,6 +21,26 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
+// Unica77 LL (Lineto) — tipografía de la ficha de proyecto V3. Sans + Mono.
+const unica = localFont({
+  variable: "--font-unica",
+  display: "swap",
+  src: [
+    { path: "./fonts/Unica77LL-Light.otf", weight: "300", style: "normal" },
+    { path: "./fonts/Unica77LL-Regular.otf", weight: "400", style: "normal" },
+    { path: "./fonts/Unica77LL-Medium.otf", weight: "500", style: "normal" },
+  ],
+});
+
+const unicaMono = localFont({
+  variable: "--font-unica-mono",
+  display: "swap",
+  src: [
+    { path: "./fonts/Unica77MonoLL-Light.otf", weight: "300", style: "normal" },
+    { path: "./fonts/Unica77MonoLL-Regular.otf", weight: "400", style: "normal" },
+  ],
+});
+
 export const metadata: Metadata = {
   title: "Laia Torres",
   description:
@@ -33,7 +53,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${ppMori.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${ppMori.variable} ${geistMono.variable} ${unica.variable} ${unicaMono.variable} h-full antialiased`}
+    >
       <body
         className="min-h-full bg-white font-normal"
         style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace" }}

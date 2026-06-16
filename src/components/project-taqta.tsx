@@ -1,49 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import type { VideoMode } from "@/db/schema";
+import { useEffect, useState, type CSSProperties } from "react";
+import type { Collab, ImageAlign, VideoMode } from "@/db/schema";
 import { videoEmbed } from "@/lib/video";
 
-// Ficha de proyecto estilo andreaarques.com/Taqta (Cargo):
-//  · Mucho aire arriba; navbar (igual que la home) a media altura.
-//  · Intro = "Servicios" (izq, bajo Laia) + "Sobre el proyecto" (texto, centro).
-//  · Galería por SECCIONES (campañas). Cada sección tiene un separador en la
-//    columna izquierda, a la altura de sus fotos. Al hacer scroll, cuando el
-//    separador llega a "Laia Torres" se queda sticky debajo y se van apilando.
-//  · Imágenes en mosaico a sangre (gutters pequeños), recortadas a su celda.
-
-const label = "text-[10px] uppercase tracking-[0.08em] text-black/40";
-const mono = "var(--font-geist-mono)";
-const GUT = 8; // gutter del mosaico (px)
-const STICK_BASE = 12; // offset del 1er separador respecto a la línea de Laia (px)
-const STICK_STEP = 22; // separación al apilarse (px) = altura del separador
+// Ficha de proyecto V3 (rediseño "Refinar al detalle").
+//  · Lienzo a ancho completo (tope 2550px) centrado, mucho aire.
+//  · Cabecera: etiqueta del proyecto en el margen izquierdo · servicios
+//    (alineados a la derecha del sidebar) · descripción a la derecha.
+//  · Galería: rejilla de 2 columnas (1fr · 47px · 1fr) con celdas de 590px de
+//    alto recortadas a cover. Cada bloque ocupa una fila: "pair" llena ambas
+//    columnas, "single" una sola (izq/der, la otra queda vacía → ritmo
+//    escalonado) y "wide" ocupa todo el ancho.
+//  · Pie: agencia/producción + siguiente proyecto, colabs, navegación y redes.
 
 export type Credit = { label: string; value: string };
 export type Media = { url: string; kind: "image" | "video"; videoMode: VideoMode; alt?: string };
 export type Block =
   | { type: "wide"; media: Media; ratio?: number }
-  | { type: "single"; media: Media; ratio?: number }
+  | { type: "single"; media: Media; ratio?: number; align?: ImageAlign }
   | { type: "pair"; media: [Media, Media]; ratio?: number };
 export type Section = { label: string; blocks: Block[] };
 
-function Cell({ media, ratio }: { media: Media; ratio: number }) {
+// Retícula de 12 columnas del diseño (Figma): margen y gutter de 18px.
+const GRID_MARGIN = 18;
+const GRID_GUTTER = 18;
+// Apilado sticky en el margen izquierdo: el nombre del proyecto se pega arriba
+// y las secciones se van acumulando debajo de él.
+const NAME_TOP = 50; // a la altura a la que se pega el nombre (PALAU FUGIT)
+const SECTION_BASE = 72; // primera sección, justo bajo el nombre
+const SECTION_STEP = 22; // separación al apilarse
+const CONTENT_LEFT_FOOTER = "calc(25% + 19px)";
+const RIGHT_PAD = "77px";
+
+const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
+const MONO = "var(--font-unica-mono), ui-monospace, monospace";
+const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
+const sansLight: CSSProperties = { fontFamily: SANS, fontWeight: 300, fontStyle: "normal" };
+const mono: CSSProperties = { fontFamily: MONO, fontWeight: 400, fontStyle: "normal" };
+
+const NAV = ["HOME", "ABOUT ME", "CONTACT"];
+
+// Las imágenes no se recortan: ocupan el 100% del ancho de su hueco y el alto
+// es automático (su proporción natural), así escalan en el responsive.
+function Cell({ media }: { media: Media }) {
+  if (media.kind === "video") return <VideoCell media={media} />;
   return (
-    <div style={{ aspectRatio: String(ratio) }} className="w-full overflow-hidden bg-black/5">
-      {media.kind === "video" ? <VideoCell media={media} /> : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={media.url} alt={media.alt ?? ""} className="h-full w-full object-cover" />
-      )}
-    </div>
+    // next/image no aporta aquí; usamos <img> con alto automático (sin recorte).
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={media.url} alt={media.alt ?? ""} style={{ width: "100%", height: "auto", display: "block" }} />
   );
 }
 
 function VideoCell({ media }: { media: Media }) {
   const embed = videoEmbed(media.url, media.videoMode);
+  // El vídeo embebido no expone su proporción; usamos 16/9 (ancho completo).
+  const style: CSSProperties = { width: "100%", aspectRatio: "16 / 9", display: "block", border: 0 };
   if (embed.type === "file") {
     return (
       <video
         src={embed.src}
-        className="h-full w-full object-cover"
+        style={style}
         playsInline
         controls={!embed.ambient}
         autoPlay={embed.ambient}
@@ -55,192 +72,393 @@ function VideoCell({ media }: { media: Media }) {
   return (
     <iframe
       src={embed.src}
-      className="h-full w-full"
+      style={style}
       allow="autoplay; fullscreen; picture-in-picture"
       allowFullScreen
     />
   );
 }
 
-// Para vídeos sin proporción conocida usamos 16/9 por defecto.
-function blockRatio(b: Block, fallback: number): number {
-  if (b.ratio) return b.ratio;
-  const m = b.type === "pair" ? b.media[0] : b.media;
-  return m.kind === "video" ? 16 / 9 : fallback;
-}
-
-function renderBlock(b: Block) {
-  if (b.type === "wide") return <Cell media={b.media} ratio={blockRatio(b, 16 / 9)} />;
-  if (b.type === "single") return <Cell media={b.media} ratio={blockRatio(b, 4 / 5)} />;
-  const r = blockRatio(b, 4 / 5);
-  return (
-    <div className="grid grid-cols-2" style={{ gap: GUT }}>
-      <Cell media={b.media[0]} ratio={r} />
-      <Cell media={b.media[1]} ratio={r} />
-    </div>
-  );
-}
-
 export function ProjectTaqta({
   navigate,
   name,
-  index,
-  category,
-  year,
-  about,
   services,
-  credits,
+  about,
+  agency,
+  collabs,
   sections,
   nextHref,
-  nextLabel,
 }: {
   navigate: (href: string) => void;
   name: string;
-  index: string;
-  category: string;
-  year: string;
-  about: string[];
   services: string[];
-  credits: Credit[];
+  about: string[];
+  agency: string;
+  collabs: Collab[];
   sections: Section[];
   nextHref: string;
-  nextLabel: string;
 }) {
-  const [grid, setGrid] = useState(false);
-
-  // Aplanar bloques con su fila de grid; cada separador abarca desde el inicio
-  // de su sección hasta el final (para quedarse sticky y apilarse).
-  let row = 1;
+  // Aplanamos los bloques de todas las secciones; cada bloque es una fila.
+  // Aplanamos los bloques asignando a cada uno su fila de la rejilla, y
+  // anotamos en qué fila empieza cada sección (para los separadores sticky).
+  // Cada separador abarca desde su fila hasta el final, así se queda pegado y
+  // se va apilando bajo el nombre del proyecto.
+  let _row = 1;
   const blockRows: { b: Block; row: number }[] = [];
-  const labelRows: { label: string; start: number; si: number }[] = [];
-  sections.forEach((sec, si) => {
-    labelRows.push({ label: sec.label, start: row, si });
+  const labelRows: { label: string; start: number }[] = [];
+  sections.forEach((sec) => {
+    if (sec.label) labelRows.push({ label: sec.label, start: _row });
     sec.blocks.forEach((b) => {
-      blockRows.push({ b, row });
-      row += 1;
+      blockRows.push({ b, row: _row });
+      _row += 1;
     });
   });
-  const lastRow = row; // exclusivo
+  const lastRow = _row; // exclusivo
+
+  // Retícula de depuración: arranca activa con ?grid en la URL y se puede
+  // alternar con el botón inferior derecho.
+  const [grid, setGrid] = useState(false);
+  useEffect(() => {
+    // Sync único con la URL al montar (debug ?grid); seguro para hidratación.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGrid(new URLSearchParams(window.location.search).has("grid"));
+  }, []);
 
   return (
-    <div className="min-h-screen w-full bg-white px-6 pb-[140px] text-black/85">
-      {/* Retícula de orientación — 12 columnas */}
-      {grid && (
-        <div className="pointer-events-none fixed inset-0 z-[60] flex gap-4 px-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="relative h-full flex-1 bg-[rgba(236,72,153,0.07)]">
-              <span className="absolute left-1 top-1 text-[9px] text-pink-500/70" style={{ fontFamily: mono }}>
-                {i + 1}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+    <div style={{ background: "#fff", maxWidth: "2550px", margin: "0 auto", position: "relative", paddingBottom: "72px" }}>
       <button
         onClick={() => setGrid((g) => !g)}
-        className={`fixed bottom-3 right-3 z-[61] rounded border border-neutral-300 bg-white/95 px-3 py-1.5 text-[11px] shadow-sm backdrop-blur hover:bg-neutral-100 ${grid ? "text-pink-600" : "text-black/60"}`}
-        style={{ fontFamily: mono }}
+        style={{
+          ...mono,
+          position: "fixed",
+          bottom: "12px",
+          right: "12px",
+          zIndex: 70,
+          padding: "6px 12px",
+          fontSize: "11px",
+          borderRadius: "6px",
+          border: "1px solid #d4d4d4",
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(4px)",
+          color: grid ? "#db2777" : "rgba(0,0,0,0.6)",
+          cursor: "pointer",
+        }}
       >
         Retícula
       </button>
-
-      {/* Cabecera con meta — índice · nombre · categoría · año (fija arriba) */}
-      <div className="fixed inset-x-0 top-0 z-50 px-6 pt-5" style={{ fontFamily: mono }}>
-        <div className="grid grid-cols-12 items-baseline gap-4 text-[11px] uppercase tracking-[0.05em]">
-          <div className="col-span-7 flex items-baseline gap-3">
-            <span className="text-black/35">{index}</span>
-            <span className="font-semibold text-black/80">{name}</span>
-          </div>
-          <div className="col-span-2 text-black/45">{category}</div>
-          <div className="col-span-3 text-right text-black/45">{year}</div>
+      {grid ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: `${GRID_MARGIN}px`,
+            right: `${GRID_MARGIN}px`,
+            zIndex: 60,
+            pointerEvents: "none",
+            display: "grid",
+            gridTemplateColumns: "repeat(12, 1fr)",
+            columnGap: `${GRID_GUTTER}px`,
+          }}
+        >
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} style={{ background: "rgba(198,198,198,0.10)" }} />
+          ))}
         </div>
-        <div className="mt-4 h-px w-full bg-black/15" />
+      ) : null}
+      {/* ── Navegación (fija arriba) ────────────────────────────────── */}
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: "2550px",
+          zIndex: 50,
+          mixBlendMode: "exclusion",
+          display: "flex",
+          alignItems: "flex-start",
+          paddingTop: "24px",
+          paddingBottom: "20px",
+          paddingLeft: "18px",
+          paddingRight: `${GRID_MARGIN}px`,
+        }}
+      >
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            ...sans,
+            fontSize: "17.45px",
+            lineHeight: 1.45,
+            color: "#fff",
+            whiteSpace: "nowrap",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
+          Laia Torres
+        </button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: "56px", paddingTop: "1px" }}>
+          {NAV.map((item) => (
+            <button
+              key={item}
+              onClick={() => (item === "HOME" ? navigate("/") : undefined)}
+              style={{
+                ...sans,
+                fontSize: "12.235px",
+                lineHeight: 1.45,
+                color: "#fff",
+                whiteSpace: "nowrap",
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </nav>
+      {/* Reserva el espacio del nav fijo (mismo alto que tenía: 272px). */}
+      <div style={{ height: "272px" }} />
+
+      {/* ── Nombre del proyecto — sticky al chocar con el nav ───────── */}
+      {/* height:0 para no empujar el layout; el contenedor padre (root) abarca
+          toda la página, así se mantiene pegado durante todo el scroll. */}
+      <div style={{ position: "sticky", top: `${NAME_TOP}px`, height: 0, zIndex: 40, paddingLeft: "18px" }}>
+        <p
+          style={{
+            ...sans,
+            fontSize: "12.295px",
+            lineHeight: 1.45,
+            color: "#000",
+            margin: 0,
+            whiteSpace: "nowrap",
+            textTransform: "uppercase",
+          }}
+        >
+          {name}
+        </p>
       </div>
 
-      {/* Aire (deja sitio a la cabecera fija) */}
-      <div className="h-[16vh]" />
-
-      {/* Navbar igual que la home: Laia (izq) · proyecto (centro) · About (der) */}
-      <div className="fixed inset-x-0 top-1/2 z-50 -translate-y-1/2 px-6" style={{ mixBlendMode: "difference", fontFamily: mono }}>
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="cursor-pointer border-none bg-transparent p-0 text-[11px] font-semibold uppercase tracking-[0.05em] text-white transition-opacity hover:opacity-50"
-          >
-            Laia Torres
-          </button>
-          <a href="#" className="text-[11px] font-semibold uppercase tracking-[0.05em] text-white transition-opacity hover:opacity-50">
-            About
-          </a>
-        </div>
-      </div>
-
-      {/* Intro: servicios (izq) + sobre el proyecto (centro) */}
-      <div className="mt-[40px] grid grid-cols-12 gap-4">
-        <div className="col-start-1 col-span-3 text-[12px] leading-[1.7]" style={{ fontFamily: mono }}>
-          <p className={label}>Servicios</p>
-          <div className="mt-[1.8em]">
-            {services.map((s, i) => (
-              <p key={i}>{s}</p>
-            ))}
+      {/* ── Cabecera del proyecto ───────────────────────────────────── */}
+      <div style={{ marginBottom: "80px" }}>
+        <div
+          style={{
+            paddingLeft: `${GRID_MARGIN}px`,
+            paddingRight: `${GRID_MARGIN}px`,
+            display: "grid",
+            gridTemplateColumns: "repeat(12, 1fr)",
+            columnGap: `${GRID_GUTTER}px`,
+          }}
+        >
+          {/* Servicios — alineados a la derecha de la columna 3 (cols 1–3) */}
+          <div style={{ gridColumn: "1 / 4" }}>
+            <p
+              style={{
+                ...mono,
+                fontSize: "10.881px",
+                lineHeight: 1.45,
+                color: "#a5a5a5",
+                textAlign: "right",
+                letterSpacing: "0.109px",
+                margin: 0,
+              }}
+            >
+              {services.map((s, i) => (
+                <span key={i}>
+                  {s}
+                  {i < services.length - 1 ? <br /> : null}
+                </span>
+              ))}
+            </p>
           </div>
-        </div>
 
-        <div className="col-start-4 col-span-4">
-          <p className={label}>Sobre el proyecto</p>
-          <div className="mt-[1.8em] space-y-[1.1em] text-[13px] leading-[1.55]" style={{ fontFamily: "var(--font-sans)" }}>
+          {/* Descripción — columnas 4–12 */}
+          <div style={{ gridColumn: "4 / 13", maxWidth: "836px" }}>
             {about.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-        </div>
-
-        <div className="col-start-9 col-span-4 text-[12px] leading-[1.7]" style={{ fontFamily: mono }}>
-          <p className={label}>Créditos</p>
-          <div className="mt-[1.8em]">
-            {credits.map((c, i) => (
-              <p key={i}>
-                <span className="font-semibold">{c.label}:</span> <span className="text-black/55">{c.value}</span>
+              <p
+                key={i}
+                style={{
+                  ...sans,
+                  fontSize: "18.88px",
+                  lineHeight: 1.23,
+                  color: "#000",
+                  margin: i === 0 ? 0 : "0.9em 0 0",
+                }}
+              >
+                {p}
               </p>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Galería con separadores sticky que se apilan */}
-      <div className="mt-[12vh] grid grid-cols-12 gap-x-4" style={{ rowGap: GUT }}>
-        {/* Separadores (col 1-3), cada uno abarca hasta el final */}
-        {labelRows.map(({ label: l, start, si }) => (
-          <div key={`l${si}`} className="relative" style={{ gridColumn: "1 / 4", gridRow: `${start} / ${lastRow}` }}>
+      {/* ── Galería ─────────────────────────────────────────────────── */}
+      {/* Rejilla de 12: separadores de sección en cols 1–3 (sticky, se apilan)
+          e imágenes en cols 4–12 (dos mitades pegadas). */}
+      <div
+        style={{
+          paddingLeft: `${GRID_MARGIN}px`,
+          paddingRight: `${GRID_MARGIN}px`,
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          columnGap: `${GRID_GUTTER}px`,
+        }}
+      >
+        {/* Separadores de sección — apilados bajo el nombre del proyecto */}
+        {labelRows.map(({ label: l, start }, si) => (
+          <div key={`sec-${si}`} style={{ gridColumn: "1 / 4", gridRow: `${start} / ${lastRow}` }}>
             <div
-              className="sticky z-40 flex items-center bg-white"
-              style={{ top: `calc(50vh + ${STICK_BASE + si * STICK_STEP}px)`, height: STICK_STEP, fontFamily: mono }}
+              style={{
+                ...sans,
+                position: "sticky",
+                top: `${SECTION_BASE + si * SECTION_STEP}px`,
+                zIndex: 30,
+                fontSize: "12.295px",
+                lineHeight: 1.45,
+                color: "#a5a5a5",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}
             >
-              <p className="text-[11px] font-normal uppercase tracking-[0.06em] text-black/55">{l}</p>
+              {l}
             </div>
           </div>
         ))}
 
-        {/* Bloques de imágenes (col 4-12) */}
-        {blockRows.map(({ b, row: r }, i) => (
-          <div
-            key={`b${i}`}
-            style={{ gridColumn: b.type === "single" ? "4 / 9" : "4 / 13", gridRow: String(r) }}
-          >
-            {renderBlock(b)}
+        {/* Filas de imágenes (cols 4–12) */}
+        {blockRows.map(({ b, row }, i) => (
+          <div key={`b-${i}`} style={{ gridColumn: "4 / 13", gridRow: row }}>
+            {b.type === "wide" ? (
+              <Cell media={b.media} />
+            ) : b.type === "pair" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+                <Cell media={b.media[0]} />
+                <Cell media={b.media[1]} />
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+                {b.align === "right" ? <div /> : null}
+                <Cell media={b.media} />
+                {b.align !== "right" ? <div /> : null}
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Siguiente proyecto */}
-      <div className="mt-[8vh] text-center">
-        <button
-          onClick={() => navigate(nextHref)}
-          className="cursor-pointer border-none bg-transparent p-0 text-[clamp(18px,1.8vw,26px)] text-black/85 hover:opacity-50"
-          style={{ fontFamily: "var(--font-sans)" }}
-        >
-          {nextLabel}
-        </button>
+      {/* ── Pie: agencia + siguiente (mismo tramo que la galería: col 4→12) ── */}
+      <div
+        style={{
+          paddingLeft: `${GRID_MARGIN}px`,
+          paddingRight: `${GRID_MARGIN}px`,
+          paddingTop: "24px",
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          columnGap: `${GRID_GUTTER}px`,
+        }}
+      >
+        <div style={{ gridColumn: "4 / 13", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "24px" }}>
+          {agency ? (
+            <p style={{ ...mono, fontSize: "10.881px", lineHeight: 1.45, color: "#000", margin: 0 }}>
+              Agency and production: <span style={{ color: "#a5a5a5" }}>{agency}</span>
+            </p>
+          ) : (
+            <span />
+          )}
+          <button
+            onClick={() => navigate(nextHref)}
+            style={{
+              ...mono,
+              fontSize: "10.881px",
+              lineHeight: 1.45,
+              color: "#000",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            → SIGUIENTE PROYECTO
+          </button>
+        </div>
+      </div>
+
+      {/* ── Pie: colabs ─────────────────────────────────────────────── */}
+      {collabs.length ? (
+        <div style={{ paddingLeft: CONTENT_LEFT_FOOTER, paddingRight: RIGHT_PAD, marginTop: "32px" }}>
+          <p style={{ ...mono, fontSize: "10.881px", lineHeight: 1.26, color: "#000", margin: 0 }}>Collabs:</p>
+          {collabs.map(({ handle, href }) => (
+            <a
+              key={handle}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                ...mono,
+                display: "block",
+                fontSize: "10.881px",
+                lineHeight: 1.26,
+                color: "#a5a5a5",
+                textDecoration: "underline",
+              }}
+            >
+              {handle}
+            </a>
+          ))}
+        </div>
+      ) : null}
+
+      {/* ── Pie: redes (fijo abajo) ─────────────────────────────────── */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: "2550px",
+          zIndex: 50,
+          mixBlendMode: "exclusion",
+          paddingLeft: `${GRID_MARGIN}px`,
+          paddingRight: `${GRID_MARGIN}px`,
+          paddingTop: "16px",
+          paddingBottom: "24px",
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          columnGap: `${GRID_GUTTER}px`,
+        }}
+      >
+        {/* Columna 1 — bloque aparte */}
+        <div style={{ gridColumn: "1 / 2" }}>
+          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0, whiteSpace: "nowrap" }}>
+            Laia Torres
+          </p>
+        </div>
+        {/* Columna 4 — redes (como estaban) */}
+        <div style={{ gridColumn: "4 / 9" }}>
+          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0 }}>
+            <a href="#" style={{ color: "#fff", textDecoration: "underline" }}>
+              Linkedin
+            </a>
+            <br />
+            <a href="#" style={{ color: "#fff", textDecoration: "underline" }}>
+              Instagram
+            </a>
+          </p>
+        </div>
+        {/* Última columna (12) — alineado a la derecha */}
+        <div style={{ gridColumn: "12 / 13", textAlign: "right" }}>
+          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0, whiteSpace: "nowrap" }}>
+            © 2024
+          </p>
+        </div>
       </div>
     </div>
   );

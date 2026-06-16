@@ -1,5 +1,5 @@
 import type { Block, Media, Section } from "@/components/project-taqta";
-import type { MediaKind, VideoMode } from "@/db/schema";
+import type { ImageAlign, MediaKind, VideoMode } from "@/db/schema";
 
 // Medio tal y como lo necesita el constructor de secciones.
 export type TaqtaImage = {
@@ -9,6 +9,7 @@ export type TaqtaImage = {
   alt: string;
   section: string;
   layout: "wide" | "pair" | "single";
+  align: ImageAlign;
   width: number | null;
   height: number | null;
 };
@@ -44,7 +45,12 @@ export function buildSections(images: TaqtaImage[]): Section[] {
 
     const flushLonePair = () => {
       if (pendingPair) {
-        blocks.push({ type: "single", media: mediaOf(pendingPair), ratio: ratioOf(pendingPair) });
+        blocks.push({
+          type: "single",
+          media: mediaOf(pendingPair),
+          ratio: ratioOf(pendingPair),
+          align: pendingPair.align,
+        });
         pendingPair = null;
       }
     };
@@ -65,7 +71,11 @@ export function buildSections(images: TaqtaImage[]): Section[] {
       }
       // wide / single rompen una pareja pendiente.
       flushLonePair();
-      blocks.push({ type: img.layout, media: mediaOf(img), ratio: ratioOf(img) });
+      if (img.layout === "single") {
+        blocks.push({ type: "single", media: mediaOf(img), ratio: ratioOf(img), align: img.align });
+      } else {
+        blocks.push({ type: "wide", media: mediaOf(img), ratio: ratioOf(img) });
+      }
     }
     flushLonePair();
 

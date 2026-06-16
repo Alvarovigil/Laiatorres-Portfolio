@@ -27,17 +27,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <ProjectView
-      index={String(idx + 1).padStart(3, "0")}
       name={project.name}
-      category={project.category}
-      year={project.year}
       about={about.length ? about : [project.description]}
       services={project.services}
-      // ProjectTaqta usa una lista plana de créditos: aplanamos los grupos.
-      credits={project.credits.flat()}
+      agency={project.agency}
+      collabs={project.collabs}
       sections={buildSections(project.images)}
       nextHref={`/project/${next.slug}`}
-      nextLabel="↳ Siguiente proyecto"
     />
   );
 }

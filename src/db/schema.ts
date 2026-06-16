@@ -6,7 +6,12 @@ import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, index } from "
 export type Credit = { label: string; value: string };
 export type CreditGroups = Credit[][];
 export type ImageLayout = "wide" | "pair" | "single";
+// Lado de una imagen "single" en la rejilla de la ficha V3 (la otra columna
+// queda vacía, creando el ritmo escalonado).
+export type ImageAlign = "left" | "right";
 export type MediaKind = "image" | "video";
+// Marca colaboradora de un proyecto (footer de la ficha V3).
+export type Collab = { handle: string; href: string };
 // Cómo se reproduce un vídeo: "ambient" = autoplay + bucle + sin sonido;
 // "player" = con controles y sonido.
 export type VideoMode = "ambient" | "player";
@@ -26,6 +31,9 @@ export const projects = pgTable("projects", {
   category: text("category").notNull().default(""),
   year: text("year").notNull().default(""),
   services: jsonb("services").$type<string[]>().notNull().default([]),
+  // Ficha V3: agencia/producción y marcas colaboradoras (footer).
+  agency: text("agency").notNull().default(""),
+  collabs: jsonb("collabs").$type<Collab[]>().notNull().default([]),
   // Orden en el archivo y número visible ("01"). El número se deriva del orden
   // al renderizar, pero guardamos sortOrder para poder reordenar.
   sortOrder: integer("sort_order").notNull().default(0),
@@ -51,6 +59,8 @@ export const images = pgTable(
     // Agrupación y maquetación en la ficha V2.
     section: text("section").notNull().default(""),
     layout: text("layout", { enum: ["wide", "pair", "single"] }).notNull().default("single"),
+    // Lado de una imagen "single" en la rejilla escalonada (ficha V3).
+    align: text("align", { enum: ["left", "right"] }).notNull().default("left"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
