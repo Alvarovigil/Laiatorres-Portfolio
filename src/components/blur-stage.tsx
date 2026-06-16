@@ -56,6 +56,8 @@ export function BlurStage({
         willChange: settled ? "auto" : "filter, opacity",
       }}
     >
+      {/* `navigate` solo lee el ref al invocarse (clic), no durante el render. */}
+      {/* eslint-disable-next-line react-hooks/refs */}
       {children(navigate)}
     </div>
   );

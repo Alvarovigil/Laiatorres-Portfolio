@@ -30,8 +30,6 @@ const GRID_GUTTER = 18;
 const NAME_TOP = 50; // a la altura a la que se pega el nombre (PALAU FUGIT)
 const SECTION_BASE = 72; // primera sección, justo bajo el nombre
 const SECTION_STEP = 22; // separación al apilarse
-const CONTENT_LEFT_FOOTER = "calc(25% + 19px)";
-const RIGHT_PAD = "77px";
 
 const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
 const MONO = "var(--font-unica-mono), ui-monospace, monospace";
@@ -115,8 +113,7 @@ export function ProjectTaqta({
   });
   const lastRow = _row; // exclusivo
 
-  // Retícula de depuración: arranca activa con ?grid en la URL y se puede
-  // alternar con el botón inferior derecho.
+  // Retícula de depuración: oculta por defecto, solo visible con ?grid en la URL.
   const [grid, setGrid] = useState(false);
   useEffect(() => {
     // Sync único con la URL al montar (debug ?grid); seguro para hidratación.
@@ -125,27 +122,7 @@ export function ProjectTaqta({
   }, []);
 
   return (
-    <div style={{ background: "#fff", maxWidth: "2550px", margin: "0 auto", position: "relative", paddingBottom: "72px" }}>
-      <button
-        onClick={() => setGrid((g) => !g)}
-        style={{
-          ...mono,
-          position: "fixed",
-          bottom: "12px",
-          right: "12px",
-          zIndex: 70,
-          padding: "6px 12px",
-          fontSize: "11px",
-          borderRadius: "6px",
-          border: "1px solid #d4d4d4",
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(4px)",
-          color: grid ? "#db2777" : "rgba(0,0,0,0.6)",
-          cursor: "pointer",
-        }}
-      >
-        Retícula
-      </button>
+    <div style={{ background: "#fff", maxWidth: "2550px", margin: "0 auto", position: "relative" }}>
       {grid ? (
         <div
           style={{
@@ -390,46 +367,68 @@ export function ProjectTaqta({
         </div>
       </div>
 
-      {/* ── Pie: colabs ─────────────────────────────────────────────── */}
+      {/* ── Pie: colabs (alineado con Agency: columna 4) ────────────── */}
       {collabs.length ? (
-        <div style={{ paddingLeft: CONTENT_LEFT_FOOTER, paddingRight: RIGHT_PAD, marginTop: "32px" }}>
-          <p style={{ ...mono, fontSize: "10.881px", lineHeight: 1.26, color: "#000", margin: 0 }}>Collabs:</p>
-          {collabs.map(({ handle, href }) => (
-            <a
-              key={handle}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                ...mono,
-                display: "block",
-                fontSize: "10.881px",
-                lineHeight: 1.26,
-                color: "#a5a5a5",
-                textDecoration: "underline",
-              }}
-            >
-              {handle}
-            </a>
-          ))}
+        <div
+          style={{
+            paddingLeft: `${GRID_MARGIN}px`,
+            paddingRight: `${GRID_MARGIN}px`,
+            marginTop: "32px",
+            display: "grid",
+            gridTemplateColumns: "repeat(12, 1fr)",
+            columnGap: `${GRID_GUTTER}px`,
+          }}
+        >
+          <div style={{ gridColumn: "4 / 13" }}>
+            <p style={{ ...mono, fontSize: "10.881px", lineHeight: 1.26, color: "#000", margin: 0 }}>Collabs:</p>
+            {collabs.map(({ handle, href }) => (
+              <a
+                key={handle}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  ...mono,
+                  display: "block",
+                  fontSize: "10.881px",
+                  lineHeight: 1.26,
+                  color: "#a5a5a5",
+                  textDecoration: "underline",
+                }}
+              >
+                {handle}
+              </a>
+            ))}
+          </div>
         </div>
       ) : null}
 
-      {/* ── Pie: redes (fijo abajo) ─────────────────────────────────── */}
+      {/* ── Pie: contacto (enmedio) ─────────────────────────────────── */}
       <div
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "100%",
-          maxWidth: "2550px",
-          zIndex: 50,
+          marginTop: "120px",
+          paddingLeft: `${GRID_MARGIN}px`,
+          paddingRight: `${GRID_MARGIN}px`,
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          columnGap: `${GRID_GUTTER}px`,
+        }}
+      >
+        <div style={{ gridColumn: "4 / 13" }}>
+          <p style={{ ...sans, fontSize: "18.88px", lineHeight: 1.23, color: "#000", margin: 0 }}>
+            Si quieres ver más proyectos, <span style={{ textDecoration: "underline" }}>contacta conmigo</span>.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Pie: redes (al final del contenido) ─────────────────────── */}
+      <div
+        style={{
+          marginTop: "120px",
           mixBlendMode: "exclusion",
           paddingLeft: `${GRID_MARGIN}px`,
           paddingRight: `${GRID_MARGIN}px`,
-          paddingTop: "16px",
-          paddingBottom: "24px",
+          paddingBottom: "48px",
           display: "grid",
           gridTemplateColumns: "repeat(12, 1fr)",
           columnGap: `${GRID_GUTTER}px`,
