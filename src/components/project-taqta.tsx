@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import type { Collab, ImageAlign, VideoMode } from "@/db/schema";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
 import { videoEmbed } from "@/lib/video";
 
@@ -31,11 +32,11 @@ const GRID_GUTTER = 18;
 const NAME_TOP = 50; // a la altura a la que se pega el nombre (PALAU FUGIT)
 const SECTION_BASE = 72; // primera sección, justo bajo el nombre
 const SECTION_STEP = 22; // separación al apilarse
+const SECTION_GAP = 96; // hueco vertical antes de cada nueva sección (px)
 
 const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
 const MONO = "var(--font-unica-mono), ui-monospace, monospace";
 const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
-const sansLight: CSSProperties = { fontFamily: SANS, fontWeight: 300, fontStyle: "normal" };
 const mono: CSSProperties = { fontFamily: MONO, fontWeight: 400, fontStyle: "normal" };
 
 // Las imágenes no se recortan: ocupan el 100% del ancho de su hueco y el alto
@@ -111,6 +112,9 @@ export function ProjectTaqta({
     });
   });
   const lastRow = _row; // exclusivo
+  // Filas donde empieza una sección (para el hueco entre campañas). La primera
+  // (fila 1) no lleva hueco delante.
+  const sectionStarts = new Set(labelRows.map((l) => l.start).filter((s) => s > 1));
 
   // Retícula de depuración: oculta por defecto, solo visible con ?grid en la URL.
   const [grid, setGrid] = useState(false);
@@ -231,9 +235,14 @@ export function ProjectTaqta({
           columnGap: `${GRID_GUTTER}px`,
         }}
       >
-        {/* Separadores de sección — apilados bajo el nombre del proyecto */}
+        {/* Separadores de sección — apilados bajo el nombre del proyecto.
+            En las secciones con hueco delante, la etiqueta arranca a la altura
+            de la imagen (bajo el hueco), no encima de él. */}
         {labelRows.map(({ label: l, start }, si) => (
-          <div key={`sec-${si}`} style={{ gridColumn: "1 / 4", gridRow: `${start} / ${lastRow}` }}>
+          <div
+            key={`sec-${si}`}
+            style={{ gridColumn: "1 / 4", gridRow: `${start} / ${lastRow}`, marginTop: sectionStarts.has(start) ? `${SECTION_GAP}px` : undefined }}
+          >
             <div
               style={{
                 ...sans,
@@ -254,7 +263,10 @@ export function ProjectTaqta({
 
         {/* Filas de imágenes (cols 4–12) */}
         {blockRows.map(({ b, row }, i) => (
-          <div key={`b-${i}`} style={{ gridColumn: "4 / 13", gridRow: row }}>
+          <div
+            key={`b-${i}`}
+            style={{ gridColumn: "4 / 13", gridRow: row, marginTop: sectionStarts.has(row) ? `${SECTION_GAP}px` : undefined }}
+          >
             {b.type === "wide" ? (
               <Cell media={b.media} />
             ) : b.type === "pair" ? (
@@ -365,44 +377,8 @@ export function ProjectTaqta({
         </div>
       </div>
 
-      {/* ── Pie: redes (al final del contenido) ─────────────────────── */}
-      <div
-        style={{
-          marginTop: "120px",
-          mixBlendMode: "exclusion",
-          paddingLeft: `${GRID_MARGIN}px`,
-          paddingRight: `${GRID_MARGIN}px`,
-          paddingBottom: "48px",
-          display: "grid",
-          gridTemplateColumns: "repeat(12, 1fr)",
-          columnGap: `${GRID_GUTTER}px`,
-        }}
-      >
-        {/* Columna 1 — bloque aparte */}
-        <div style={{ gridColumn: "1 / 2" }}>
-          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0, whiteSpace: "nowrap" }}>
-            Laia Torres
-          </p>
-        </div>
-        {/* Columna 4 — redes (como estaban) */}
-        <div style={{ gridColumn: "4 / 9" }}>
-          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0 }}>
-            <a href="#" style={{ color: "#fff", textDecoration: "underline" }}>
-              Linkedin
-            </a>
-            <br />
-            <a href="#" style={{ color: "#fff", textDecoration: "underline" }}>
-              Instagram
-            </a>
-          </p>
-        </div>
-        {/* Última columna (12) — alineado a la derecha */}
-        <div style={{ gridColumn: "12 / 13", textAlign: "right" }}>
-          <p style={{ ...sansLight, fontSize: "12.235px", lineHeight: 1.19, color: "#fff", margin: 0, whiteSpace: "nowrap" }}>
-            © 2024
-          </p>
-        </div>
-      </div>
+      {/* ── Pie: redes (compartido, al final del contenido) ─────────── */}
+      <SiteFooter marginTop="120px" />
     </div>
   );
 }

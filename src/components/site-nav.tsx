@@ -7,7 +7,11 @@ import type { CSSProperties } from "react";
 // la home y las fichas de proyecto.
 const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
 const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
-const NAV = ["HOME", "ABOUT ME", "CONTACT"];
+const NAV = [
+  { label: "HOME", href: "/" },
+  { label: "ABOUT ME", href: "/about" },
+  { label: "CONTACT", href: "/contact" },
+];
 
 const linkBtn: CSSProperties = {
   ...sans,
@@ -45,11 +49,11 @@ export function SiteNav({ navigate }: { navigate: (href: string) => void }) {
       <div style={{ marginLeft: "auto", display: "flex", gap: "56px", paddingTop: "1px" }}>
         {NAV.map((item) => (
           <button
-            key={item}
-            onClick={() => (item === "HOME" ? navigate("/") : undefined)}
+            key={item.label}
+            onClick={() => navigate(item.href)}
             style={{ ...linkBtn, fontSize: "12.235px", lineHeight: 1.45 }}
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </div>
