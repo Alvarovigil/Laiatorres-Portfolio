@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import type { Collab, ImageAlign, VideoMode } from "@/db/schema";
+import { SiteNav } from "@/components/site-nav";
 import { videoEmbed } from "@/lib/video";
 
 // Ficha de proyecto V3 (rediseño "Refinar al detalle").
@@ -36,8 +37,6 @@ const MONO = "var(--font-unica-mono), ui-monospace, monospace";
 const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
 const sansLight: CSSProperties = { fontFamily: SANS, fontWeight: 300, fontStyle: "normal" };
 const mono: CSSProperties = { fontFamily: MONO, fontWeight: 400, fontStyle: "normal" };
-
-const NAV = ["HOME", "ABOUT ME", "CONTACT"];
 
 // Las imágenes no se recortan: ocupan el 100% del ancho de su hueco y el alto
 // es automático (su proporción natural), así escalan en el responsive.
@@ -143,63 +142,8 @@ export function ProjectTaqta({
           ))}
         </div>
       ) : null}
-      {/* ── Navegación (fija arriba) ────────────────────────────────── */}
-      <nav
-        style={{
-          position: "fixed",
-          top: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "100%",
-          maxWidth: "2550px",
-          zIndex: 50,
-          mixBlendMode: "exclusion",
-          display: "flex",
-          alignItems: "flex-start",
-          paddingTop: "24px",
-          paddingBottom: "20px",
-          paddingLeft: "18px",
-          paddingRight: `${GRID_MARGIN}px`,
-        }}
-      >
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            ...sans,
-            fontSize: "17.45px",
-            lineHeight: 1.45,
-            color: "#fff",
-            whiteSpace: "nowrap",
-            background: "transparent",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-          }}
-        >
-          Laia Torres
-        </button>
-        <div style={{ marginLeft: "auto", display: "flex", gap: "56px", paddingTop: "1px" }}>
-          {NAV.map((item) => (
-            <button
-              key={item}
-              onClick={() => (item === "HOME" ? navigate("/") : undefined)}
-              style={{
-                ...sans,
-                fontSize: "12.235px",
-                lineHeight: 1.45,
-                color: "#fff",
-                whiteSpace: "nowrap",
-                background: "transparent",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-              }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </nav>
+      {/* ── Navegación (fija arriba, compartida con la home) ────────── */}
+      <SiteNav navigate={navigate} />
       {/* Reserva el espacio del nav fijo (mismo alto que tenía: 272px). */}
       <div style={{ height: "272px" }} />
 

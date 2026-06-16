@@ -14,41 +14,45 @@ export function ArchiveChrome({
   topCenter,
   bottomCenter,
   onHome,
+  showTop = true,
 }: {
   topCenter?: React.ReactNode;
   bottomCenter?: React.ReactNode;
   onHome?: () => void;
+  showTop?: boolean;
 }) {
   return (
     <>
       {/* Barra superior */}
-      <div
-        className="fixed inset-x-0 top-0 z-50 flex items-start justify-between px-6 py-4"
-        style={{ mixBlendMode: "difference" }}
-      >
-        {/* Esquina sup. izq. */}
-        <div className="flex-1 leading-[1.45]">
-          <button
-            onClick={onHome}
-            className={`block cursor-pointer border-none bg-transparent p-0 ${txtCls} hover:opacity-50 transition-opacity`}
-          >
-            Laia Torres
-          </button>
-          <span className={`block ${subCls}`}>Art Direction</span>
-        </div>
+      {showTop ? (
+        <div
+          className="fixed inset-x-0 top-0 z-50 flex items-start justify-between px-6 py-4"
+          style={{ mixBlendMode: "difference" }}
+        >
+          {/* Esquina sup. izq. */}
+          <div className="flex-1 leading-[1.45]">
+            <button
+              onClick={onHome}
+              className={`block cursor-pointer border-none bg-transparent p-0 ${txtCls} hover:opacity-50 transition-opacity`}
+            >
+              Laia Torres
+            </button>
+            <span className={`block ${subCls}`}>Art Direction</span>
+          </div>
 
-        {/* Centro sup. */}
-        <div className="shrink-0 text-center">{topCenter ? <span className={txtCls}>{topCenter}</span> : null}</div>
+          {/* Centro sup. */}
+          <div className="shrink-0 text-center">{topCenter ? <span className={txtCls}>{topCenter}</span> : null}</div>
 
-        {/* Esquina sup. der. */}
-        <div className="flex flex-1 justify-end gap-6">
-          {NAV.map((l) => (
-            <a key={l} href="#" className={linkCls}>
-              {l}
-            </a>
-          ))}
+          {/* Esquina sup. der. */}
+          <div className="flex flex-1 justify-end gap-6">
+            {NAV.map((l) => (
+              <a key={l} href="#" className={linkCls}>
+                {l}
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Barra inferior */}
       <div

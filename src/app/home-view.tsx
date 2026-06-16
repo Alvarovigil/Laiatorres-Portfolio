@@ -2,6 +2,7 @@
 
 import { ArchiveChrome } from "@/components/archive-chrome";
 import { BlurStage } from "@/components/blur-stage";
+import { SiteNav } from "@/components/site-nav";
 
 export type HomeCard = { slug: string; name: string; cover: string };
 
@@ -19,7 +20,9 @@ export function HomeView({ cards }: { cards: HomeCard[] }) {
     <BlurStage>
       {(navigate) => (
         <div className="min-h-screen w-full bg-white">
-          <ArchiveChrome onHome={() => navigate("/")} bottomCenter="Selected Work — 2024 / 2025" />
+          {/* Mismo navbar que las fichas de proyecto */}
+          <SiteNav navigate={navigate} />
+          <ArchiveChrome showTop={false} bottomCenter="Selected Work — 2024 / 2025" />
 
           <div className="px-[6px] pb-[140px] pt-[120px]">
             {cards.length === 0 ? (
