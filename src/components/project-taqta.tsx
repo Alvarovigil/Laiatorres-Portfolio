@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { Collab, ImageAlign, VideoMode } from "@/db/schema";
+import { GridOverlay } from "@/components/grid-overlay";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
 import { videoEmbed } from "@/lib/video";
@@ -116,36 +117,9 @@ export function ProjectTaqta({
   // (fila 1) no lleva hueco delante.
   const sectionStarts = new Set(labelRows.map((l) => l.start).filter((s) => s > 1));
 
-  // Retícula de depuración: oculta por defecto, solo visible con ?grid en la URL.
-  const [grid, setGrid] = useState(false);
-  useEffect(() => {
-    // Sync único con la URL al montar (debug ?grid); seguro para hidratación.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGrid(new URLSearchParams(window.location.search).has("grid"));
-  }, []);
-
   return (
     <div style={{ background: "#fff", maxWidth: "2550px", margin: "0 auto", position: "relative" }}>
-      {grid ? (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: `${GRID_MARGIN}px`,
-            right: `${GRID_MARGIN}px`,
-            zIndex: 60,
-            pointerEvents: "none",
-            display: "grid",
-            gridTemplateColumns: "repeat(12, 1fr)",
-            columnGap: `${GRID_GUTTER}px`,
-          }}
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} style={{ background: "rgba(198,198,198,0.10)" }} />
-          ))}
-        </div>
-      ) : null}
+      <GridOverlay />
       {/* ── Navegación (fija arriba, compartida con la home) ────────── */}
       <SiteNav navigate={navigate} />
       {/* Reserva el espacio del nav fijo (mismo alto que tenía: 272px). */}
