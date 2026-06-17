@@ -41,11 +41,10 @@ const unicaMono = localFont({
   ],
 });
 
-// URL base para resolver imágenes absolutas (OG/Twitter). En producción,
-// idealmente NEXT_PUBLIC_SITE_URL = dominio final; si no, cae al deploy de Vercel.
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+// URL base para resolver imágenes absolutas (OG/Twitter). Debe ser pública:
+// NO usamos VERCEL_URL (la del deploy va protegida y rompe la miniatura).
+// Cuando haya dominio propio, define NEXT_PUBLIC_SITE_URL.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://adhoc-laiatorres-portfolio.vercel.app";
 
 const SITE_DESCRIPTION =
   "Dirección de arte y diseño gráfico desde Barcelona. Identidad visual, dirección de arte y campañas entre moda, belleza, hostelería y cultura.";
