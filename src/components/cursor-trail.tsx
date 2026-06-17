@@ -59,7 +59,7 @@ export function CursorTrail() {
       const x = e.clientX;
       const y = e.clientY;
       const t = performance.now();
-      dot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      dot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(45deg)`;
       dot.style.opacity = "1";
 
       pts.push({ x, y });
@@ -145,9 +145,9 @@ export function CursorTrail() {
           position: "fixed",
           top: 0,
           left: 0,
-          width: "11px",
-          height: "11px",
-          borderRadius: "50%",
+          width: "9px",
+          height: "9px",
+          // Cuadrado girado 45º (rombo); la rotación va en el transform (onMove).
           background: BLUE,
           pointerEvents: "none",
           zIndex: 9999,
