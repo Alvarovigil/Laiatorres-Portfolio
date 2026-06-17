@@ -53,7 +53,7 @@ export function CursorTrail() {
     const pts: { x: number; y: number }[] = [];
     let lastT = 0;
     let curW = 2.4;
-    const LIFE = 2000; // cada trazo dura 2 s y se desvanece del todo
+    const LIFE = 1000; // cada trazo dura 1 s y se desvanece del todo
 
     const onMove = (e: MouseEvent) => {
       const x = e.clientX;
