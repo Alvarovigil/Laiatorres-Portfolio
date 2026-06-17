@@ -17,7 +17,7 @@ const label: CSSProperties = { ...mono, fontSize: "11px", letterSpacing: "0.04em
 
 // Intro (calcada de la referencia, con nuestra copia + tipografía).
 const INTRO =
-  "Soy directora de arte y diseñadora gráfica afincada en Barcelona. Aporto claridad e intención a identidades visuales, dirección de arte y campañas — entre moda, belleza, hostelería y cultura.";
+  "Directora de arte y diseñadora gráfica afincada en Barcelona. Con más de 8 años de experiencia, he trabajado con marcas de moda, belleza, hostelería y cultura, creando identidades visuales, dirección de arte y campañas con claridad, intención y una sensibilidad atemporal.";
 
 // Plantillas de composición por slots: cada slot coloca un medio (idx) en una
 // columna (col) y fila (row) de la rejilla de 12, con un offset opcional (mt).
