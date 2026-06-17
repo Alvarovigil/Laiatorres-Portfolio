@@ -41,10 +41,48 @@ const unicaMono = localFont({
   ],
 });
 
+// URL base para resolver imágenes absolutas (OG/Twitter). En producción,
+// idealmente NEXT_PUBLIC_SITE_URL = dominio final; si no, cae al deploy de Vercel.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const SITE_DESCRIPTION =
+  "Dirección de arte y diseño gráfico desde Barcelona. Identidad visual, dirección de arte y campañas entre moda, belleza, hostelería y cultura.";
+
 export const metadata: Metadata = {
-  title: "Laia Torres",
-  description:
-    "Showcase your work with a customizable portfolio web app designed for creatives and professionals.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Laia Torres — Dirección de arte y diseño gráfico",
+    template: "%s — Laia Torres",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "Laia Torres",
+  authors: [{ name: "Laia Torres" }],
+  creator: "Laia Torres",
+  keywords: [
+    "Laia Torres",
+    "dirección de arte",
+    "diseño gráfico",
+    "identidad visual",
+    "branding",
+    "Barcelona",
+    "portfolio",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    siteName: "Laia Torres",
+    title: "Laia Torres — Dirección de arte y diseño gráfico",
+    description: SITE_DESCRIPTION,
+    images: [{ url: "/og.jpg", width: 2752, height: 1920, alt: "Laia Torres" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Laia Torres — Dirección de arte y diseño gráfico",
+    description: SITE_DESCRIPTION,
+    images: ["/og.jpg"],
+  },
 };
 
 export default function RootLayout({

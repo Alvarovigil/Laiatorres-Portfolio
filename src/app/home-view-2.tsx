@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { BlurStage } from "@/components/blur-stage";
 import { GridOverlay } from "@/components/grid-overlay";
 import { SiteFooter } from "@/components/site-footer";
@@ -17,7 +17,7 @@ const label: CSSProperties = { ...mono, fontSize: "11px", letterSpacing: "0.04em
 
 // Intro (calcada de la referencia, con nuestra copia + tipografía).
 const INTRO =
-  "Laia Torres es directora de arte y diseñadora gráfica afincada en Barcelona. Aporta claridad e intención a identidades visuales, dirección de arte y campañas — entre moda, belleza, hostelería y cultura.";
+  "Soy directora de arte y diseñadora gráfica afincada en Barcelona. Aporto claridad e intención a identidades visuales, dirección de arte y campañas — entre moda, belleza, hostelería y cultura.";
 
 // Plantillas de composición por slots: cada slot coloca un medio (idx) en una
 // columna (col) y fila (row) de la rejilla de 12, con un offset opcional (mt).
@@ -67,7 +67,7 @@ function Media({ m, aspect }: { m: WorkMedia; aspect?: string }) {
   );
 }
 
-function Cluster({ p, tpl, baseNum, onOpen }: { p: WorkProject; tpl: Slot[]; baseNum: number; onOpen: () => void }) {
+function Cluster({ p, tpl, baseNum, debug, onOpen }: { p: WorkProject; tpl: Slot[]; baseNum: number; debug: boolean; onOpen: () => void }) {
   return (
     <div style={{ marginBottom: "12vw" }}>
       <div
@@ -86,7 +86,8 @@ function Cluster({ p, tpl, baseNum, onOpen }: { p: WorkProject; tpl: Slot[]; bas
           const num = baseNum + tpl.slice(0, k + 1).filter((ss) => p.media[ss.idx]).length;
           return (
             <div key={k} onClick={onOpen} style={{ gridColumn: s.col, gridRow: s.row ?? 1, marginTop: s.mt ? `${s.mt}px` : undefined, position: "relative", cursor: "pointer" }}>
-              {/* TEMPORAL: número para referenciar las imágenes */}
+              {/* Número para referenciar las imágenes (solo en ?grid) */}
+              {debug ? (
               <span
                 style={{
                   ...mono,
@@ -104,11 +105,12 @@ function Cluster({ p, tpl, baseNum, onOpen }: { p: WorkProject; tpl: Slot[]; bas
               >
                 {num}
               </span>
+              ) : null}
               <Media m={m} aspect={s.aspect} />
               {/* Pie bajo la 1ª imagen del proyecto (de punta a punta de ella) */}
               {num === baseNum + 1 ? (
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "12px" }}>
-                  <span style={{ ...sans, fontSize: "13px", color: "#000" }}>{p.name}</span>
+                  <span style={{ ...sans, fontSize: "13px", color: "#000", textTransform: "uppercase" }}>{p.name}</span>
                   {p.category ? <span style={label}>{p.category}</span> : null}
                   {p.year ? <span style={label}>{p.year}</span> : null}
                 </div>
@@ -122,6 +124,11 @@ function Cluster({ p, tpl, baseNum, onOpen }: { p: WorkProject; tpl: Slot[]; bas
 }
 
 export function HomeView2({ work }: { work: WorkProject[] }) {
+  const [debug, setDebug] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDebug(new URLSearchParams(window.location.search).has("grid"));
+  }, []);
   return (
     <BlurStage>
       {(navigate) => (
@@ -172,6 +179,7 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
                       p={p}
                       tpl={TEMPLATES[i % TEMPLATES.length]}
                       baseNum={baseNum}
+                      debug={debug}
                       onOpen={() => navigate(`/project/${p.slug}`)}
                     />
                   );

@@ -4,7 +4,7 @@ import { ArchivePage } from "@/components/archive-page";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 
 export const metadata: Metadata = {
-  title: "Contact — Laia Torres",
+  title: "Contact",
   description: "Contacta con Laia Torres para encargos y colaboraciones.",
 };
 

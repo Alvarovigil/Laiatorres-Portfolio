@@ -4,8 +4,8 @@ import { ArchivePage } from "@/components/archive-page";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 
 export const metadata: Metadata = {
-  title: "About — Laia Torres",
-  description: "Laia Torres — dirección de arte y diseño gráfico.",
+  title: "About",
+  description: "Sobre Laia Torres — dirección de arte y diseño gráfico en Barcelona.",
 };
 
 const meta: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400 };
