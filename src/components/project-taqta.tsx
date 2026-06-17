@@ -26,7 +26,7 @@ export type Block =
 export type Section = { label: string; blocks: Block[] };
 
 // Retícula de 12 columnas del diseño (Figma): margen y gutter de 18px.
-const GRID_MARGIN = 18;
+const GRID_MARGIN = 36;
 const GRID_GUTTER = 18;
 // Apilado sticky en el margen izquierdo: el nombre del proyecto se pega arriba
 // y las secciones se van acumulando debajo de él.
@@ -128,7 +128,7 @@ export function ProjectTaqta({
       {/* ── Nombre del proyecto — sticky al chocar con el nav ───────── */}
       {/* height:0 para no empujar el layout; el contenedor padre (root) abarca
           toda la página, así se mantiene pegado durante todo el scroll. */}
-      <div style={{ position: "sticky", top: `${NAME_TOP}px`, height: 0, zIndex: 40, paddingLeft: "18px" }}>
+      <div style={{ position: "sticky", top: `${NAME_TOP}px`, height: 0, zIndex: 40, paddingLeft: "36px" }}>
         <p
           style={{
             ...sans,

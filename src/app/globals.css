@@ -128,3 +128,18 @@
     @apply font-sans;
   }
 }
+/* Selección de texto: letra azul eléctrico (como el cursor) sobre caja gris. */
+::selection {
+  background: #d8dadc;
+  color: #1f51ff;
+}
+::-moz-selection {
+  background: #d8dadc;
+  color: #1f51ff;
+}
+
+/* Morphing sutil del cursor (blob) para que no parezca un círculo perfecto. */
+@keyframes cursorBlob {
+  0%, 100% { border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; }
+  50% { border-radius: 38% 62% 47% 53% / 49% 53% 47% 51%; }
+}

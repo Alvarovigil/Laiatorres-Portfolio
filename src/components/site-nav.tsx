@@ -8,9 +8,8 @@ import type { CSSProperties } from "react";
 const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
 const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
 const NAV = [
-  { label: "HOME", href: "/" },
-  { label: "ABOUT ME", href: "/about" },
-  { label: "CONTACT", href: "/contact" },
+  { label: "CASE STUDIES", href: "/" },
+  { label: "ABOUT", href: "/about" },
 ];
 
 const linkBtn: CSSProperties = {
@@ -39,14 +38,14 @@ export function SiteNav({ navigate }: { navigate: (href: string) => void }) {
         alignItems: "flex-start",
         paddingTop: "24px",
         paddingBottom: "20px",
-        paddingLeft: "18px",
-        paddingRight: "18px",
+        paddingLeft: "36px",
+        paddingRight: "36px",
       }}
     >
       <button onClick={() => navigate("/")} style={{ ...linkBtn, fontSize: "17.45px", lineHeight: 1.45 }}>
         Laia Torres
       </button>
-      <div style={{ marginLeft: "auto", display: "flex", gap: "56px", paddingTop: "1px" }}>
+      <div style={{ marginLeft: "auto", display: "flex", gap: "40px", paddingTop: "1px" }}>
         {NAV.map((item) => (
           <button
             key={item.label}

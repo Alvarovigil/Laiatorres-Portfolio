@@ -151,8 +151,8 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
           <div
             style={{
               flex: 1,
-              paddingLeft: "18px",
-              paddingRight: "18px",
+              paddingLeft: "36px",
+              paddingRight: "36px",
               display: "grid",
               gridTemplateColumns: "repeat(12, 1fr)",
               columnGap: "0px",
