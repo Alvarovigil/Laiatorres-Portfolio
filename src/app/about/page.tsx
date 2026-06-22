@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { ArchivePage } from "@/components/archive-page";
+import { Hablemos } from "./bio-copy";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ const BIO = [
 
 const para: CSSProperties = {
   ...body,
-  fontSize: "clamp(22px, 2.3vw, 34px)",
+  fontSize: "clamp(18px, 1.9vw, 28px)",
   lineHeight: 1.28,
   color: "#000",
   margin: 0,
@@ -35,7 +36,11 @@ export default function AboutPage() {
         <span style={{ ...mono, position: "absolute", left: 0, top: "0.45em", fontSize: "12px", color: "#a5a5a5" }}>(About)</span>
         {BIO.map((p, i) => (
           <p key={i} style={{ ...para, margin: i === 0 ? 0 : "0.7em 0 0" }}>
-            {p}
+            {p.includes("hablemos")
+              ? p.split(/(hablemos)/).map((part, j) =>
+                  part === "hablemos" ? <Hablemos key={j} /> : part,
+                )
+              : p}
           </p>
         ))}
       </div>

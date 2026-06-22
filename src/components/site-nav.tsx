@@ -8,7 +8,7 @@ import type { CSSProperties } from "react";
 const SANS = "var(--font-unica), 'Helvetica Neue', Arial, sans-serif";
 const sans: CSSProperties = { fontFamily: SANS, fontWeight: 400, fontStyle: "normal" };
 const NAV = [
-  { label: "CASE STUDIES", href: "/" },
+  { label: "PROYECTOS", href: "/" },
   { label: "ABOUT", href: "/about" },
 ];
 

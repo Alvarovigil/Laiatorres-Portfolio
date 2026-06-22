@@ -33,12 +33,12 @@ const COLLABS: Collab[] = [];
 
 async function main() {
   const fields = {
-    name: "Uniq Made",
+    name: "Uniqmade",
     description: DESCRIPTION,
-    chromeCenter: "Uniq Made",
+    chromeCenter: "Uniqmade",
     chromeBottom: "Branding — Haircare",
-    category: "Branding",
-    year: "2025",
+    category: "Identidad | Packaging | Dirección de arte | RRSS",
+    year: "2023",
     services: SERVICES,
     agency: AGENCY,
     collabs: COLLABS,

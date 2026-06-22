@@ -38,6 +38,10 @@ export function BlurStage({
 
   const navigate = (href: string) => {
     if (leaving.current) return;
+    // Navegar a la ruta actual no cambia `pathname`, así que el efecto de reset
+    // no se dispararía y la página quedaría en blur+opacity:0 (pantalla en
+    // blanco). Si ya estamos aquí, no hacemos nada.
+    if (href === pathname) return;
     leaving.current = true;
     setSettled(false);
     setBlurred(true);
