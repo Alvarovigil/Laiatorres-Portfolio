@@ -42,8 +42,8 @@ export function SiteNav({ navigate }: { navigate: (href: string) => void }) {
         paddingRight: "36px",
       }}
     >
-      <button onClick={() => navigate("/")} style={{ ...linkBtn, fontSize: "17.45px", lineHeight: 1.45 }}>
-        Laia Torres
+      <button onClick={() => navigate("/")} style={{ ...linkBtn, fontSize: "12.235px", lineHeight: 1.45 }}>
+        LAIA TORRES
       </button>
       <div style={{ marginLeft: "auto", display: "flex", gap: "40px", paddingTop: "1px" }}>
         {NAV.map((item) => (

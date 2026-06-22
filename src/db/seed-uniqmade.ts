@@ -13,13 +13,13 @@ const DIR = "/projects/uniq-made";
 
 type Img = { file: string; layout: ImageLayout; align?: ImageAlign };
 const SEQUENCE: Img[] = [
-  { file: "01.png", layout: "wide" }, // hero "As unique as you are"
-  { file: "02.png", layout: "single", align: "left" }, // hombre fondo verde
-  { file: "03.jpg", layout: "wide" }, // tira de stories
-  { file: "04.png", layout: "single", align: "left" }, // mujer fondo lila
-  { file: "05.png", layout: "single", align: "right" }, // mujer fondo azul
-  { file: "06.png", layout: "pair" }, // hombre con brocha
-  { file: "07.png", layout: "pair" }, // "Perfecto para ti"
+  { file: "01.webp", layout: "wide" }, // hero "As unique as you are"
+  { file: "02.webp", layout: "single", align: "left" }, // hombre fondo verde
+  { file: "03.webp", layout: "wide" }, // tira de stories
+  { file: "04.webp", layout: "single", align: "left" }, // mujer fondo lila
+  { file: "05.webp", layout: "single", align: "right" }, // mujer fondo azul
+  { file: "06.webp", layout: "pair" }, // hombre con brocha
+  { file: "07.webp", layout: "pair" }, // "Perfecto para ti"
 ];
 
 const SERVICES = ["Identidad", "Dirección de arte", "Packaging"];
@@ -42,7 +42,7 @@ async function main() {
     services: SERVICES,
     agency: AGENCY,
     collabs: COLLABS,
-    coverUrl: `${DIR}/01.png`,
+    coverUrl: `${DIR}/01.webp`,
     published: true,
   };
 

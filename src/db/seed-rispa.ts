@@ -12,19 +12,19 @@ const DIR = "/projects/rispa";
 
 type Img = { file: string; layout: ImageLayout; align?: ImageAlign };
 const SEQUENCE: Img[] = [
-  { file: "01.png", layout: "pair" }, // botellas en estantería
-  { file: "02.png", layout: "pair" }, // logo RISPA
-  { file: "03.png", layout: "single", align: "right" }, // entrada del local
-  { file: "04.png", layout: "single", align: "left" }, // copa en barra
-  { file: "05.png", layout: "pair" }, // botellas en el bar
-  { file: "06.png", layout: "pair" }, // tipografía RISPA
-  { file: "07.png", layout: "single", align: "right" }, // mano con copa (exterior)
-  { file: "08.png", layout: "single", align: "left" }, // camisetas
-  { file: "09.png", layout: "single", align: "right" }, // tirador de cerveza
-  { file: "10.png", layout: "single", align: "left" }, // escaparate con dragón
-  { file: "11.png", layout: "single", align: "right" }, // detalle / tarjetas
-  { file: "12.png", layout: "pair" }, // tirada de caña
-  { file: "13.png", layout: "pair" }, // chapas / detalles RISPA
+  { file: "01.webp", layout: "pair" }, // botellas en estantería
+  { file: "02.webp", layout: "pair" }, // logo RISPA
+  { file: "03.webp", layout: "single", align: "right" }, // entrada del local
+  { file: "04.webp", layout: "single", align: "left" }, // copa en barra
+  { file: "05.webp", layout: "pair" }, // botellas en el bar
+  { file: "06.webp", layout: "pair" }, // tipografía RISPA
+  { file: "07.webp", layout: "single", align: "right" }, // mano con copa (exterior)
+  { file: "08.webp", layout: "single", align: "left" }, // camisetas
+  { file: "09.webp", layout: "single", align: "right" }, // tirador de cerveza
+  { file: "10.webp", layout: "single", align: "left" }, // escaparate con dragón
+  { file: "11.webp", layout: "single", align: "right" }, // detalle / tarjetas
+  { file: "12.webp", layout: "pair" }, // tirada de caña
+  { file: "13.webp", layout: "pair" }, // chapas / detalles RISPA
 ];
 
 const SERVICES = ["Identidad", "Dirección de arte", "Packaging"];
@@ -47,7 +47,7 @@ async function main() {
     services: SERVICES,
     agency: AGENCY,
     collabs: COLLABS,
-    coverUrl: `${DIR}/01.png`,
+    coverUrl: `${DIR}/01.webp`,
     published: true,
   };
 
