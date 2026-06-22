@@ -53,13 +53,13 @@ function Cell({ media }: { media: Media }) {
 
 function VideoCell({ media }: { media: Media }) {
   const embed = videoEmbed(media.url, media.videoMode);
-  // El vídeo embebido no expone su proporción; usamos 16/9 (ancho completo).
-  const style: CSSProperties = { width: "100%", aspectRatio: "16 / 9", display: "block", border: 0 };
   if (embed.type === "file") {
+    // Archivo nativo: conocemos su proporción real, así que escala como una
+    // <img> (ancho completo, alto automático) → mismo tamaño que las imágenes.
     return (
       <video
         src={embed.src}
-        style={style}
+        style={{ width: "100%", height: "auto", display: "block", border: 0 }}
         playsInline
         controls={!embed.ambient}
         autoPlay={embed.ambient}
@@ -71,7 +71,7 @@ function VideoCell({ media }: { media: Media }) {
   return (
     <iframe
       src={embed.src}
-      style={style}
+      style={{ width: "100%", aspectRatio: "16 / 9", display: "block", border: 0 }}
       allow="autoplay; fullscreen; picture-in-picture"
       allowFullScreen
     />
