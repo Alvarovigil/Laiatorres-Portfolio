@@ -122,8 +122,8 @@ export function ProjectTaqta({
       <GridOverlay />
       {/* ── Navegación (fija arriba, compartida con la home) ────────── */}
       <SiteNav navigate={navigate} />
-      {/* Reserva el espacio del nav fijo (mismo alto que tenía: 272px). */}
-      <div style={{ height: "272px" }} />
+      {/* Reserva el espacio del nav fijo. */}
+      <div style={{ height: "130px" }} />
 
       {/* ── Nombre del proyecto — sticky al chocar con el nav ───────── */}
       {/* height:0 para no empujar el layout; el contenedor padre (root) abarca
@@ -344,6 +344,14 @@ export function ProjectTaqta({
           columnGap: `${GRID_GUTTER}px`,
         }}
       >
+        <div style={{ gridColumn: "1 / 4" }}>
+          <a
+            href="mailto:laiatorres1234@gmail.com"
+            style={{ ...sans, fontSize: "13px", lineHeight: 1.23, color: "#000", margin: 0, opacity: 0.6, textDecoration: "none", whiteSpace: "nowrap", textTransform: "uppercase" }}
+          >
+            Contacto
+          </a>
+        </div>
         <div style={{ gridColumn: "4 / 13" }}>
           <p style={{ ...sans, fontSize: "18.88px", lineHeight: 1.23, color: "#000", margin: 0 }}>
             Si quieres ver más proyectos, <span style={{ textDecoration: "underline" }}>contacta conmigo</span>.
@@ -351,8 +359,14 @@ export function ProjectTaqta({
         </div>
       </div>
 
-      {/* ── Pie: redes (compartido, al final del contenido) ─────────── */}
-      <SiteFooter marginTop="120px" />
+      {/* ── Pie: redes (compartido, al final del contenido) ─────────────
+          El bloque mide 50vh con el footer anclado abajo, de modo que al
+          llegar al final del scroll la línea de contacto que queda justo
+          encima cae a media pantalla, alineada con la navbar (top: 50%).
+          Restamos ~media línea para alinear el centro del texto, no su base. */}
+      <div style={{ minHeight: "calc(25vh - 6px)", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        <SiteFooter />
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // Envuelve una página y le da una transición de desenfoque:
 //  - al entrar: aparece desde blur + fade.
@@ -16,17 +16,25 @@ export function BlurStage({
   children: (navigate: (href: string) => void) => React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [blurred, setBlurred] = useState(true); // entra borroso
   const [settled, setSettled] = useState(false); // asentado -> filter:none
   const leaving = useRef(false);
 
+  // Se ejecuta en cada cambio de ruta (no solo al montar): si Next reutiliza la
+  // instancia de BlurStage entre páginas del mismo tipo, el estado quedaría en
+  // `blurred`/`leaving` y la pantalla se vería en blanco. Reseteamos y volvemos
+  // a disparar el fundido de entrada.
   useEffect(() => {
+    leaving.current = false;
+    setSettled(false);
+    setBlurred(true);
     // doble rAF para garantizar que la transición de entrada se dispare
     const r = requestAnimationFrame(() =>
       requestAnimationFrame(() => setBlurred(false))
     );
     return () => cancelAnimationFrame(r);
-  }, []);
+  }, [pathname]);
 
   const navigate = (href: string) => {
     if (leaving.current) return;

@@ -19,34 +19,8 @@ const label: CSSProperties = { ...mono, fontSize: "11px", letterSpacing: "0.04em
 const INTRO =
   "Directora de arte y diseñadora gráfica afincada en Barcelona. Con más de 8 años de experiencia, he trabajado con marcas de moda, belleza, hostelería y cultura y liderado equipos creativos, dando forma a identidades visuales, dirección de arte y campañas con claridad, intención y una sensibilidad atemporal.";
 
-// Plantillas de composición por slots: cada slot coloca un medio (idx) en una
-// columna (col) y fila (row) de la rejilla de 12, con un offset opcional (mt).
-// Dos slots en la misma col y distinta row se apilan.
-// aspect: si se define, la imagen se recorta a esa proporción (object-fit cover);
-// si no, se muestra a su proporción natural (alto automático, sin recorte).
-type Slot = { col: string; row?: number; mt?: number; idx: number; aspect?: string };
-const TEMPLATES: Slot[][] = [
-  // 0 — comp tipo "Good Bacteria" (Julia, 1er proyecto): grande/cuadrada a la
-  //     izquierda (6 col), cuadrada a 2 col en el centro y alta a la derecha.
-  //     idx = orden visual (1, 2, 3).
-  [
-    { col: "1 / 7", idx: 0, aspect: "1 / 1" },
-    { col: "7 / 9", idx: 1, aspect: "1 / 1" },
-    { col: "11 / 13", idx: 2 },
-  ],
-  // 1 — izquierda apilada (0 arriba, 2 abajo) + derecha desfasada (1).
-  [
-    { col: "1 / 6", row: 1, idx: 0 },
-    { col: "1 / 6", row: 2, idx: 2 },
-    { col: "7 / 13", row: 1, mt: 90, idx: 1 },
-  ],
-  // 2 — izquierda grande desfasada + derecha apilada (1 arriba, 2 abajo).
-  [
-    { col: "1 / 7", row: 1, mt: 110, idx: 0 },
-    { col: "8 / 13", row: 1, idx: 1 },
-    { col: "8 / 13", row: 2, idx: 2 },
-  ],
-];
+// Desfase vertical de la columna que va "más baja" en el ritmo escalonado.
+const STAGGER = "160px";
 
 function Media({ m, aspect }: { m: WorkMedia; aspect?: string }) {
   // Con aspect → recorte a esa proporción (cover); sin aspect → natural.
@@ -67,57 +41,43 @@ function Media({ m, aspect }: { m: WorkMedia; aspect?: string }) {
   );
 }
 
-function Cluster({ p, tpl, baseNum, debug, onOpen }: { p: WorkProject; tpl: Slot[]; baseNum: number; debug: boolean; onOpen: () => void }) {
+// Una imagen de la pareja, en su mitad (1fr) de la banda, con su número de
+// depuración opcional. La columna desfasada lleva marginTop = STAGGER.
+function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: number; debug: boolean; offset: boolean; onOpen: () => void; caption?: WorkProject }) {
   return (
-    <div style={{ marginBottom: "12vw" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(12, 1fr)",
-          columnGap: "0px",
-          rowGap: "24px",
-          alignItems: "start",
-        }}
-      >
-        {tpl.map((s, k) => {
-          const m = p.media[s.idx];
-          if (!m) return null;
-          // Número en orden visual (sin mutar): nº de slots con medio hasta aquí.
-          const num = baseNum + tpl.slice(0, k + 1).filter((ss) => p.media[ss.idx]).length;
-          return (
-            <div key={k} onClick={onOpen} style={{ gridColumn: s.col, gridRow: s.row ?? 1, marginTop: s.mt ? `${s.mt}px` : undefined, position: "relative", cursor: "pointer" }}>
-              {/* Número para referenciar las imágenes (solo en ?grid) */}
-              {debug ? (
-              <span
-                style={{
-                  ...mono,
-                  position: "absolute",
-                  top: "8px",
-                  left: "8px",
-                  zIndex: 5,
-                  background: "#000",
-                  color: "#fff",
-                  fontSize: "13px",
-                  lineHeight: 1,
-                  padding: "4px 7px",
-                  borderRadius: "4px",
-                }}
-              >
-                {num}
-              </span>
-              ) : null}
-              <Media m={m} aspect={s.aspect} />
-              {/* Pie bajo la 1ª imagen del proyecto (de punta a punta de ella) */}
-              {num === baseNum + 1 ? (
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "12px" }}>
-                  <span style={{ ...sans, fontSize: "13px", color: "#000", textTransform: "uppercase" }}>{p.name}</span>
-                  {p.category ? <span style={label}>{p.category}</span> : null}
-                  {p.year ? <span style={label}>{p.year}</span> : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
+    <div onClick={onOpen} style={{ position: "relative", cursor: "pointer", marginTop: offset ? STAGGER : undefined }}>
+      {debug ? (
+        <span style={{ ...mono, position: "absolute", top: "8px", left: "8px", zIndex: 5, background: "#000", color: "#fff", fontSize: "13px", lineHeight: 1, padding: "4px 7px", borderRadius: "4px" }}>
+          {num}
+        </span>
+      ) : null}
+      <Media m={m} />
+      {/* Pie bajo la 1ª imagen del proyecto (de punta a punta de ella) */}
+      {caption ? (
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "12px" }}>
+          <span style={{ ...sans, fontSize: "13px", color: "#000", textTransform: "uppercase" }}>{caption.name}</span>
+          {caption.category ? <span style={label}>{caption.category}</span> : null}
+          {caption.year ? <span style={label}>{caption.year}</span> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// Pareja de imágenes a TODO el ancho, sobre las mismas 12 columnas y gutters
+// que la página (repeat(12, 1fr), gutter 18px) para que los bordes caigan sobre
+// las líneas del grid. Cada foto ocupa media página (6 columnas): izq 1–6 ·
+// der 7–12, con el gutter central de 18px entre ellas. Alternamos qué columna
+// va desfasada hacia abajo (mirror) → zigzag tipo Palau, pero más grande.
+function Cluster({ p, baseNum, mirror, debug, onOpen }: { p: WorkProject; baseNum: number; mirror: boolean; debug: boolean; onOpen: () => void }) {
+  const [a, b] = p.media;
+  return (
+    <div style={{ marginBottom: "12vw", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", columnGap: "18px", alignItems: "start" }}>
+      <div style={{ gridColumn: "1 / 7" }}>
+        {a ? <Half m={a} num={baseNum + 1} debug={debug} offset={mirror} onOpen={onOpen} caption={p} /> : null}
+      </div>
+      <div style={{ gridColumn: "7 / 13" }}>
+        {b ? <Half m={b} num={baseNum + 2} debug={debug} offset={!mirror} onOpen={onOpen} /> : null}
       </div>
     </div>
   );
@@ -143,7 +103,7 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
             flexDirection: "column",
           }}
         >
-          <GridOverlay gap="0px" lines />
+          <GridOverlay lines />
           <SiteNav navigate={navigate} />
           <div style={{ height: "272px" }} />
 
@@ -155,11 +115,11 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
               paddingRight: "36px",
               display: "grid",
               gridTemplateColumns: "repeat(12, 1fr)",
-              columnGap: "0px",
+              columnGap: "18px",
               alignContent: "start",
             }}
           >
-            <p style={{ ...sans, gridColumn: "1 / 8", fontSize: "clamp(18px, 1.55vw, 23px)", lineHeight: 1.4, color: "#000", margin: 0 }}>
+            <p style={{ ...sans, gridColumn: "1 / 9", fontSize: "clamp(18px, 1.55vw, 23px)", lineHeight: 1.4, color: "#000", margin: 0 }}>
               <span style={{ ...mono, fontSize: "11px", color: "#a5a5a5", verticalAlign: "2px", marginRight: "10px" }}>(Hola)</span>
               {INTRO}
             </p>
@@ -177,7 +137,7 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
                     <Cluster
                       key={p.slug}
                       p={p}
-                      tpl={TEMPLATES[i % TEMPLATES.length]}
+                      mirror={i % 2 === 1}
                       baseNum={baseNum}
                       debug={debug}
                       onOpen={() => navigate(`/project/${p.slug}`)}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
-import { CursorTrail } from "@/components/cursor-trail";
 import "./globals.css";
 
 // PP Mori (Pangram Pangram) — tipo principal (títulos, nombres, textos).
@@ -100,7 +99,6 @@ export default function RootLayout({
         style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace" }}
       >
         {children}
-        <CursorTrail />
       </body>
     </html>
   );

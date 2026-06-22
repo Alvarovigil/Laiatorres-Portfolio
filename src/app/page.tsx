@@ -2,9 +2,9 @@ import { listPublishedProjects } from "@/db/queries";
 import { HomeView2, type WorkProject } from "./home-view-2";
 
 // Selección manual de medios para la home, por proyecto (orden visual 1,2,3).
-// Por índice de la galería (sortOrder): Julia = 05.jpg, vídeo, 02.jpg.
+// Índices en p.images (orden sortOrder). Julia: 18.jpg (portada) + 05.jpg.
 const HOME_MEDIA: Record<string, number[]> = {
-  "julia-perfumeries": [4, 0, 8],
+  "julia-perfumeries": [17, 4],
   "palau-fugit": [0, 1], // solo 2 imágenes
 };
 
@@ -26,7 +26,7 @@ export default async function Home() {
         // Por defecto: portada (si hay) + primeras imágenes/vídeos.
         if (p.coverUrl) media.push({ url: p.coverUrl, kind: "image", videoMode: "ambient" });
         for (const i of p.images) {
-          if (media.length >= 3) break;
+          if (media.length >= 2) break;
           if (media.some((m) => m.url === i.url)) continue;
           media.push({ url: i.url, kind: i.kind, videoMode: i.videoMode });
         }

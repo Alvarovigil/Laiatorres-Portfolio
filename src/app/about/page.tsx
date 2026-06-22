@@ -11,13 +11,12 @@ export const metadata: Metadata = {
 const body: CSSProperties = { fontFamily: UNICA_SANS, fontWeight: 400 };
 const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400 };
 
-// TODO: copia/datos provisionales.
 const BIO = [
-  "Directora de arte y diseñadora gráfica afincada en Barcelona. Aporto claridad e intención a identidades visuales, dirección de arte y campañas — entre moda, belleza, hostelería y cultura.",
-  "Mi enfoque es estratégico, cuidado en el detalle y pensado para escalar: encontrar la esencia de cada marca y traducirla a un sistema visual claro y atemporal.",
-  "Con más de 8 años de experiencia, he liderado equipos creativos y trabajado para marcas como Julia Perfumeries, Palau Fugit y Smyl, entre otras.",
+  "Soy Laia, directora de arte y diseñadora gráfica. Construyo identidades, campañas y universos visuales con concepto, intención y una sensibilidad atemporal.",
+  "Mi terreno es la dirección de arte: dar con la idea, traducirla a un lenguaje visual coherente y sostenerla en cada detalle —del branding y el packaging al lettering, los eventos y las sesiones de foto y campaña, donde disfruto dirigiendo desde detrás de cámara. La ilustración atraviesa todo lo que hago: la uso para dar carácter y calidez.",
+  "Más de 8 años de oficio y de liderar equipos creativos. Lo que mejor se me da: ordenar lo complejo, defender una idea y llevarla de principio a fin sin perder el tono.",
+  "Si tienes un proyecto entre manos, hablemos.",
 ];
-const EMAIL = "laiatorres1234@gmail.com";
 
 const para: CSSProperties = {
   ...body,
@@ -39,14 +38,6 @@ export default function AboutPage() {
             {p}
           </p>
         ))}
-
-        {/* Contacto */}
-        <div style={{ marginTop: "8vh" }}>
-          <p style={{ ...mono, fontSize: "12px", color: "#a5a5a5", margin: "0 0 0.8em" }}>(Get in touch)</p>
-          <a href={`mailto:${EMAIL}`} style={{ ...body, fontSize: "clamp(20px, 2vw, 30px)", lineHeight: 1.1, color: "#000", textDecoration: "none" }}>
-            {EMAIL}
-          </a>
-        </div>
       </div>
 
       {/* Foto arriba a la derecha */}
