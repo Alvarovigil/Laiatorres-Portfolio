@@ -94,6 +94,7 @@ export type EditorInitial = {
   coverUrl: string;
   category: string;
   year: string;
+  homeCaption: string;
   services: string[];
   agency: string;
   collabs: Collab[];
@@ -122,6 +123,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const coverRef = useRef<HTMLInputElement>(null);
   const [category, setCategory] = useState(initial.category);
   const [year, setYear] = useState(initial.year);
+  const [homeCaption, setHomeCaption] = useState(initial.homeCaption);
   const [services, setServices] = useState<string[]>(initial.services.length ? initial.services : [""]);
   const [agency, setAgency] = useState(initial.agency);
   const [collabs, setCollabs] = useState<Collab[]>(initial.collabs);
@@ -396,6 +398,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       coverUrl,
       category,
       year,
+      homeCaption,
       services,
       agency,
       collabs,
@@ -521,6 +524,18 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
               onChange={(e) => setYear(e.target.value)}
             />
           </div>
+        </div>
+        <div className="grid gap-1.5">
+          <span className={label}>Pie en la home</span>
+          <input
+            className={field}
+            placeholder="IDENTIDAD | PACKAGING | DIRECCIÓN DE ARTE - 2024"
+            value={homeCaption}
+            onChange={(e) => setHomeCaption(e.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">
+            Texto bajo la primera imagen del proyecto en la home. Si lo dejas vacío, se usa categoría + año.
+          </span>
         </div>
         <div className="grid gap-2">
           <span className={label}>Servicios</span>

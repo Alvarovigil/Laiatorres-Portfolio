@@ -9,7 +9,7 @@ import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 import { videoEmbed } from "@/lib/video";
 
 export type WorkMedia = { url: string; kind: "image" | "video"; videoMode: "ambient" | "player" };
-export type WorkProject = { slug: string; name: string; category: string; year: string; media: WorkMedia[] };
+export type WorkProject = { slug: string; name: string; category: string; year: string; homeCaption: string; media: WorkMedia[] };
 
 const sans: CSSProperties = { fontFamily: UNICA_SANS, fontWeight: 400, fontStyle: "normal" };
 const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400, fontStyle: "normal" };
@@ -56,8 +56,14 @@ function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: n
       {caption ? (
         <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "12px" }}>
           <span style={{ ...sans, fontSize: "13px", color: "#000", textTransform: "uppercase" }}>{caption.name}</span>
-          {caption.category ? <span style={label}>{caption.category}</span> : null}
-          {caption.year ? <span style={label}>{caption.year}</span> : null}
+          {caption.homeCaption ? (
+            <span style={{ ...label, textTransform: "uppercase" }}>{caption.homeCaption}</span>
+          ) : (
+            <>
+              {caption.category ? <span style={label}>{caption.category}</span> : null}
+              {caption.year ? <span style={label}>{caption.year}</span> : null}
+            </>
+          )}
         </div>
       ) : null}
     </div>

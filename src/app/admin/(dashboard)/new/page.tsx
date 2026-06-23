@@ -12,6 +12,7 @@ export default function NewProjectPage() {
         coverUrl: "",
         category: "",
         year: "",
+        homeCaption: "",
         services: [],
         agency: "",
         collabs: [],

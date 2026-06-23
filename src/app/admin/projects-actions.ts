@@ -39,6 +39,7 @@ export type ProjectInput = {
   coverUrl: string;
   category: string;
   year: string;
+  homeCaption: string;
   services: string[];
   agency: string;
   collabs: Collab[];
@@ -100,6 +101,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         coverUrl: input.coverUrl.trim(),
         category: input.category.trim(),
         year: input.year.trim(),
+        homeCaption: input.homeCaption.trim(),
         services,
         agency: input.agency.trim(),
         collabs,
@@ -133,6 +135,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       coverUrl: input.coverUrl.trim(),
       category: input.category.trim(),
       year: input.year.trim(),
+      homeCaption: input.homeCaption.trim(),
       services,
       agency: input.agency.trim(),
       collabs,

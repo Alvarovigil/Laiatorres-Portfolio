@@ -30,6 +30,9 @@ export const projects = pgTable("projects", {
   coverUrl: text("cover_url").notNull().default(""),
   category: text("category").notNull().default(""),
   year: text("year").notNull().default(""),
+  // Pie de imagen en la home (línea libre, p. ej. "IDENTIDAD | PACKAGING - 2024").
+  // Si está vacío, la home cae a categoría + año.
+  homeCaption: text("home_caption").notNull().default(""),
   services: jsonb("services").$type<string[]>().notNull().default([]),
   // Ficha V3: agencia/producción y marcas colaboradoras (footer).
   agency: text("agency").notNull().default(""),
