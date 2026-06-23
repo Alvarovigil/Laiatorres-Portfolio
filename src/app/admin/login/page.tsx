@@ -10,11 +10,12 @@ export default async function LoginPage({
   const { from } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6">
-      <div className="flex flex-col items-center gap-8">
+    <main className="flex min-h-screen items-center justify-center px-6">
+      <div className="ad-card flex w-full max-w-sm flex-col items-center gap-7 p-8">
         <div className="text-center">
-          <h1 className="text-lg font-semibold text-foreground">Panel de proyectos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Laia Torres — acceso privado</p>
+          <p className="ad-eyebrow mb-2">Acceso privado</p>
+          <h1 className="ad-display text-[24px]">Panel de proyectos</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Laia Torres</p>
         </div>
         <LoginForm from={from ?? "/admin"} />
       </div>

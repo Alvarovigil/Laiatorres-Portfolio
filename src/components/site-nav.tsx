@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { usePathname } from "next/navigation";
 
 // Navbar del sitio: fija arriba, a ancho completo (tope 2550px), centrada.
 // mix-blend-mode: exclusion para leerse sobre cualquier fondo. Compartida entre
@@ -23,6 +24,10 @@ const linkBtn: CSSProperties = {
 };
 
 export function SiteNav({ navigate }: { navigate: (href: string) => void }) {
+  const pathname = usePathname();
+  // ABOUT activo solo en /about; PROYECTOS activo en el resto (home y fichas).
+  const isActive = (href: string) =>
+    href === "/about" ? pathname.startsWith("/about") : !pathname.startsWith("/about");
   return (
     <nav
       style={{
@@ -50,7 +55,13 @@ export function SiteNav({ navigate }: { navigate: (href: string) => void }) {
           <button
             key={item.label}
             onClick={() => navigate(item.href)}
-            style={{ ...linkBtn, fontSize: "12.235px", lineHeight: 1.45 }}
+            style={{
+              ...linkBtn,
+              fontSize: "12.235px",
+              lineHeight: 1.45,
+              opacity: isActive(item.href) ? 1 : 0.45,
+              transition: "opacity 0.35s ease",
+            }}
           >
             {item.label}
           </button>

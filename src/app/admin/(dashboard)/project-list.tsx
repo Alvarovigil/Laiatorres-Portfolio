@@ -30,25 +30,25 @@ export function ProjectList({ projects }: { projects: Project[] }) {
   }
 
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border" data-pending={pending}>
+    <ul className="ad-card divide-y divide-border/70 overflow-hidden" data-pending={pending}>
       {items.map((p, i) => (
-        <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+        <li key={p.id} className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-muted/40">
           <div className="flex flex-col">
             <button
               onClick={() => move(i, -1)}
               disabled={i === 0}
-              className="text-muted-foreground hover:text-foreground disabled:opacity-25"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-20"
               aria-label="Subir"
             >
-              ▲
+              <Chevron className="rotate-180" />
             </button>
             <button
               onClick={() => move(i, 1)}
               disabled={i === items.length - 1}
-              className="text-muted-foreground hover:text-foreground disabled:opacity-25"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-20"
               aria-label="Bajar"
             >
-              ▼
+              <Chevron />
             </button>
           </div>
 
@@ -61,9 +61,9 @@ export function ProjectList({ projects }: { projects: Project[] }) {
 
           <button
             onClick={() => togglePublish(p)}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11.5px] font-medium ${
               p.published
-                ? "bg-foreground/10 text-foreground"
+                ? "bg-foreground/[0.08] text-foreground"
                 : "bg-muted text-muted-foreground"
             }`}
           >
@@ -85,5 +85,25 @@ export function ProjectList({ projects }: { projects: Project[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// Chevron fino (apunta hacia abajo; se rota 180º para "subir").
+function Chevron({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }

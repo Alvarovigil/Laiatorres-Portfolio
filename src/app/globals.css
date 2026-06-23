@@ -137,3 +137,80 @@
   background: #d8dadc;
   color: #1f51ff;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Tema del Admin — guía de estilos del Panel de Adhōc en NEUTRO (sin verde).
+   Estética "Claude": fondo crema, superficies con hairline 1px + sombra mínima,
+   tipografía Bricolage Grotesque, escala estricta. Scopeado a `.admin-theme`
+   (lo pone src/app/admin/layout.tsx) → no toca el portfolio público.
+   Remapea los tokens de shadcn, así Button y el resto heredan el look solos.
+   ────────────────────────────────────────────────────────────────────────── */
+.admin-theme {
+  --background: #efeeeb;       /* crema base */
+  --foreground: #1f1f1e;       /* tinta casi-negra (sustituye al verde de marca) */
+  --card: #f8f8f6;             /* superficie */
+  --card-foreground: #1f1f1e;
+  --popover: #f8f8f6;
+  --popover-foreground: #1f1f1e;
+  --primary: #1f1f1e;          /* primarios = tinta (antes verde) */
+  --primary-foreground: #efeeeb;
+  --secondary: #f8f8f6;
+  --secondary-foreground: #1f1f1e;
+  --muted: #e9e7e1;
+  --muted-foreground: #7b7974;
+  --accent: #e9e7e1;
+  --accent-foreground: #1f1f1e;
+  --destructive: #c44a3f;      /* danger Adhōc */
+  --border: #e0ded7;           /* borde cálido */
+  --input: #e0ded7;
+  --ring: #b8b5ac;             /* focus neutro (sin verde) */
+  --radius: 0.625rem;
+
+  font-family: var(--font-bricolage), "Inter", ui-sans-serif, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.admin-theme ::selection {
+  background: #e0ded7;
+  color: #1f1f1e;
+}
+
+/* Superficie tipo tarjeta — anillo hairline 1px + sombra mínima (estética Claude). */
+.admin-theme .ad-card {
+  background: var(--card);
+  border-radius: 1.25rem;
+  box-shadow: 0 0 0 1px rgba(31, 31, 30, 0.08), 0 1px 2px rgba(31, 31, 30, 0.04);
+}
+.admin-theme .ad-card-hover {
+  transition: box-shadow 0.18s ease;
+}
+.admin-theme .ad-card-hover:hover {
+  box-shadow: 0 0 0 1px rgba(31, 31, 30, 0.12), 0 6px 20px rgba(31, 31, 30, 0.06);
+}
+
+/* Tarjeta punteada (vacío / dropzone). */
+.admin-theme .ad-card-dashed {
+  border: 1px dashed #cecbc3;
+  border-radius: 1.25rem;
+  background: transparent;
+}
+
+/* Título de página/sección en display (Bricolage, tracking apretado). */
+.admin-theme .ad-display {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+/* Eyebrow / etiqueta en versalitas. */
+.admin-theme .ad-eyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}

@@ -103,8 +103,8 @@ export type EditorInitial = {
 };
 
 const field =
-  "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-const label = "text-xs font-medium uppercase tracking-wide text-muted-foreground";
+  "h-10 w-full rounded-[10px] border border-border bg-card px-3.5 text-[14px] text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:border-foreground/30 focus-visible:ring-2 focus-visible:ring-foreground/10";
+const label = "ad-eyebrow";
 
 export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const router = useRouter();
@@ -430,7 +430,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       {error ? <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
 
       {/* Datos básicos */}
-      <section className="grid gap-4">
+      <section className="ad-card grid gap-4 p-6">
         <div className="grid gap-1.5">
           <span className={label}>Nombre</span>
           <input className={field} value={name} onChange={(e) => onNameChange(e.target.value)} />
@@ -468,7 +468,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       </section>
 
       {/* Meta de la ficha (V2): portada, categoría, año, servicios */}
-      <section className="grid gap-4">
+      <section className="ad-card grid gap-4 p-6">
         <div className="grid gap-1.5">
           <span className={label}>Portada (home)</span>
           <div className="flex items-center gap-3">
@@ -582,7 +582,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       </section>
 
       {/* Galería: lista mixta de líneas de sección + imágenes */}
-      <section className="grid gap-3">
+      <section className="ad-card grid gap-3 p-6">
         <div className="flex items-center justify-between">
           <span className={label}>Galería ({mediaCount})</span>
           <div className="flex items-center gap-3 text-sm">
@@ -605,7 +605,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
             if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
           }}
           onClick={() => fileRef.current?.click()}
-          className="cursor-pointer rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="ad-card-dashed cursor-pointer px-4 py-8 text-center text-sm text-muted-foreground transition hover:bg-muted/40"
         >
           Arrastra imágenes aquí o haz clic para seleccionar
         </div>
@@ -627,21 +627,29 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
               dragging && "opacity-40",
               isOver && "ring-2 ring-ring ring-offset-1",
             );
+            const ctrlBtn =
+              "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-20";
             const controls = (
-              <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground">
+              <div className="flex shrink-0 flex-col items-center gap-0.5">
                 <button
                   type="button"
                   aria-label="Arrastrar para reordenar"
                   title="Arrastrar para reordenar"
                   onMouseDown={() => setDraggingKey(it.key)}
                   onTouchStart={() => setDraggingKey(it.key)}
-                  className="cursor-grab px-1 leading-none active:cursor-grabbing hover:text-foreground"
+                  className={cn(ctrlBtn, "cursor-grab active:cursor-grabbing")}
                 >
-                  ⠿
+                  <GripIcon />
                 </button>
-                <button onClick={() => moveItem(i, -1)} disabled={i === 0} className="px-1 leading-none disabled:opacity-25">▲</button>
-                <button onClick={() => moveItem(i, 1)} disabled={i === items.length - 1} className="px-1 leading-none disabled:opacity-25">▼</button>
-                <button onClick={() => removeItem(i)} className="px-1 leading-none text-destructive/80 hover:text-destructive">✕</button>
+                <button onClick={() => moveItem(i, -1)} disabled={i === 0} className={ctrlBtn} aria-label="Subir">
+                  <ChevronIcon className="rotate-180" />
+                </button>
+                <button onClick={() => moveItem(i, 1)} disabled={i === items.length - 1} className={ctrlBtn} aria-label="Bajar">
+                  <ChevronIcon />
+                </button>
+                <button onClick={() => removeItem(i)} className={cn(ctrlBtn, "hover:bg-destructive/10 hover:text-destructive")} aria-label="Eliminar">
+                  <CloseIcon />
+                </button>
               </div>
             );
 
@@ -791,7 +799,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       </section>
 
       {/* Créditos */}
-      <section className="grid gap-3">
+      <section className="ad-card grid gap-3 p-6">
         <span className={label}>Créditos</span>
         {credits.map((group, g) => (
           <div key={g} className="grid gap-2 rounded-lg border border-border p-3">
@@ -828,5 +836,51 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+// ── Iconos de los controles (asa, reordenar, eliminar) ──
+function iconProps(className: string) {
+  return {
+    width: 14,
+    height: 14,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className,
+    "aria-hidden": true,
+  };
+}
+
+function ChevronIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function CloseIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+// Asa de arrastre — 6 puntos (drag handle).
+function GripIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <circle cx="9" cy="6" r="1.4" />
+      <circle cx="15" cy="6" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="9" cy="18" r="1.4" />
+      <circle cx="15" cy="18" r="1.4" />
+    </svg>
   );
 }
