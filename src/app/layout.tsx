@@ -44,7 +44,7 @@ const unicaMono = localFont({
 // URL base para resolver imágenes absolutas (OG/Twitter). Debe ser pública:
 // NO usamos VERCEL_URL (la del deploy va protegida y rompe la miniatura).
 // Cuando haya dominio propio, define NEXT_PUBLIC_SITE_URL.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://adhoc-laiatorres-portfolio.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://laiatorres.com";
 
 const SITE_DESCRIPTION =
   "Dirección de arte y diseño gráfico desde Barcelona. Identidad visual, dirección de arte y campañas entre moda, belleza, hostelería y cultura.";
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     siteName: "Laia Torres",
     title: "Laia Torres — Dirección de arte y diseño gráfico",
     description: SITE_DESCRIPTION,
-    images: [{ url: "/og.jpg", width: 2752, height: 1920, alt: "Laia Torres" }],
+    images: [{ url: "/og.jpg", width: 1200, height: 837, alt: "Laia Torres" }],
   },
   twitter: {
     card: "summary_large_image",
