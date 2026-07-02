@@ -11,8 +11,8 @@ const item: CSSProperties = { ...sans, fontSize: "13px", lineHeight: 1.19, color
 const link: CSSProperties = { color: "#fff", textDecoration: "underline" };
 
 const SOCIAL = [
-  { label: "Linkedin", href: "#" },
-  { label: "Instagram", href: "#" },
+  { label: "Linkedin", href: "https://www.linkedin.com/in/laiatorresr/" },
+  { label: "Instagram", href: "https://www.instagram.com/laiatowers22/" },
 ];
 
 // Enlace de red con hover: se atenúa suavemente al pasar el ratón.
@@ -21,6 +21,8 @@ function SocialLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
+      target="_blank"
+      rel="noreferrer"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{ ...link, opacity: hover ? 0.5 : 1, transition: "opacity 0.25s ease" }}

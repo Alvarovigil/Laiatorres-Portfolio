@@ -354,7 +354,8 @@ export function ProjectTaqta({
         </div>
         <div style={{ gridColumn: "4 / 13" }}>
           <p style={{ ...sans, fontSize: "18.88px", lineHeight: 1.23, color: "#000", margin: 0 }}>
-            Si quieres ver más proyectos, <span style={{ textDecoration: "underline" }}>contacta conmigo</span>.
+            Si quieres ver más proyectos,{" "}
+            <a href="mailto:laiatorres1234@gmail.com" style={{ color: "inherit", textDecoration: "underline" }}>contacta conmigo</a>.
           </p>
         </div>
       </div>

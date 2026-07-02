@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { ArchivePage } from "@/components/archive-page";
 import { Hablemos } from "./bio-copy";
+import { ClientsMarquee } from "./clients-marquee";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 
 export const metadata: Metadata = {
@@ -13,9 +14,8 @@ const body: CSSProperties = { fontFamily: UNICA_SANS, fontWeight: 400 };
 const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400 };
 
 const BIO = [
-  "Soy Laia, directora de arte y diseñadora gráfica. Construyo identidades, campañas y universos visuales con concepto, intención y una sensibilidad atemporal.",
-  "Mi terreno es la dirección de arte: dar con la idea, traducirla a un lenguaje visual coherente y sostenerla en cada detalle —del branding y el packaging al lettering, los eventos y las sesiones de foto y campaña, donde disfruto dirigiendo desde detrás de cámara. La ilustración atraviesa todo lo que hago: la uso para dar carácter y calidez.",
-  "Más de 8 años de oficio y de liderar equipos creativos. Lo que mejor se me da: ordenar lo complejo, defender una idea y llevarla de principio a fin sin perder el tono.",
+  "Soy Laia, directora de arte y diseñadora gráfica. Construyo identidades, campañas y universos visuales con concepto e intención.",
+  "Mi terreno es la dirección de arte y el liderazgo de equipos creativos desde hace más de 5 años: desde el branding y el packaging hasta cualquier canal donde se exprese la marca. Traduzco conceptos en campañas y shootings con una gran atención al detalle en set, buscando siempre la coherencia, conectar con la sensibilidad y el propósito de la marca.",
   "Si tienes un proyecto entre manos, hablemos.",
 ];
 
@@ -49,6 +49,11 @@ export default function AboutPage() {
       <div style={{ gridColumn: "11 / 13" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/profile/laia.jpg" alt="Laia Torres" style={{ width: "100%", aspectRatio: "3 / 4", objectFit: "cover", display: "block" }} />
+      </div>
+
+      {/* Carrusel de clientes destacados — fila a ancho completo */}
+      <div style={{ gridColumn: "1 / 13", marginTop: "clamp(80px, 12vh, 180px)" }}>
+        <ClientsMarquee />
       </div>
     </ArchivePage>
   );
