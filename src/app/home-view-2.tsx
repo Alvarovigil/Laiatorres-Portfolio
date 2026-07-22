@@ -17,7 +17,7 @@ const label: CSSProperties = { ...mono, fontSize: "11px", letterSpacing: "0.04em
 
 // Intro (calcada de la referencia, con nuestra copia + tipografía).
 const INTRO =
-  "Directora de arte y diseñadora gráfica afincada en Barcelona. Con más de 8 años de experiencia, he trabajado con marcas de moda, belleza, hostelería y cultura y liderado equipos creativos, dando forma a identidades visuales, dirección de arte y campañas con claridad, intención y una sensibilidad atemporal.";
+  "Directora de arte y diseñadora gráfica afincada en Barcelona. Con más de 5 años de experiencia, he trabajado con marcas de moda, belleza, hostelería y cultura y liderado equipos creativos, dando forma a identidades visuales, dirección de arte y campañas con claridad, intención y una sensibilidad atemporal.";
 
 // Desfase vertical de la columna que va "más baja" en el ritmo escalonado.
 const STAGGER = "160px";
@@ -154,7 +154,38 @@ export function HomeView2({ work }: { work: WorkProject[] }) {
             </div>
           </div>
 
-          <SiteFooter marginTop="40px" />
+          {/* ── Pie: contacto ─────────────────────────────────────────── */}
+          <div
+            style={{
+              marginTop: "120px",
+              paddingLeft: "36px",
+              paddingRight: "36px",
+              display: "grid",
+              gridTemplateColumns: "repeat(12, 1fr)",
+              columnGap: "18px",
+            }}
+          >
+            <div style={{ gridColumn: "1 / 4" }}>
+              <a
+                href="mailto:laiatorres1234@gmail.com"
+                style={{ ...sans, fontSize: "13px", lineHeight: 1.23, color: "#000", margin: 0, opacity: 0.6, textDecoration: "none", whiteSpace: "nowrap", textTransform: "uppercase" }}
+              >
+                Contacto
+              </a>
+            </div>
+            <div style={{ gridColumn: "4 / 13" }}>
+              <p style={{ ...sans, fontSize: "18.88px", lineHeight: 1.23, color: "#000", margin: 0 }}>
+                Si quieres ver más proyectos,{" "}
+                <a href="mailto:laiatorres1234@gmail.com" style={{ color: "inherit", textDecoration: "underline" }}>contacta conmigo</a>.
+              </p>
+            </div>
+          </div>
+
+          {/* Mismo anclaje que en la ficha de proyecto: la línea de contacto
+              queda a media pantalla al llegar al final del scroll. */}
+          <div style={{ minHeight: "calc(25vh - 6px)", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+            <SiteFooter />
+          </div>
         </div>
       )}
     </BlurStage>
