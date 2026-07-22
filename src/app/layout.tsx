@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -82,6 +82,13 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: ["/og.jpg"],
   },
+};
+
+// Sin límite de zoom: el usuario debe poder ampliar (accesibilidad).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({

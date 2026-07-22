@@ -5,6 +5,8 @@ import { BlurStage } from "@/components/blur-stage";
 import { GridOverlay } from "@/components/grid-overlay";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
+import { MobileHome } from "@/components/mobile/mobile-home";
+import { Responsive } from "@/components/mobile/responsive";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 import { videoEmbed } from "@/lib/video";
 
@@ -16,7 +18,7 @@ const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400, fontStyle
 const label: CSSProperties = { ...mono, fontSize: "11px", letterSpacing: "0.04em", color: "#a5a5a5", margin: 0 };
 
 // Intro (calcada de la referencia, con nuestra copia + tipografía).
-const INTRO =
+export const INTRO =
   "Directora de arte y diseñadora gráfica afincada en Barcelona. Con más de 5 años de experiencia, he trabajado con marcas de moda, belleza, hostelería y cultura y liderado equipos creativos, dando forma a identidades visuales, dirección de arte y campañas con claridad, intención y una sensibilidad atemporal.";
 
 // Desfase vertical de la columna que va "más baja" en el ritmo escalonado.
@@ -90,6 +92,15 @@ function Cluster({ p, baseNum, mirror, debug, onOpen }: { p: WorkProject; baseNu
 }
 
 export function HomeView2({ work }: { work: WorkProject[] }) {
+  return (
+    <Responsive
+      mobile={<BlurStage>{(navigate) => <MobileHome work={work} intro={INTRO} navigate={navigate} />}</BlurStage>}
+      desktop={<HomeDesktop work={work} />}
+    />
+  );
+}
+
+function HomeDesktop({ work }: { work: WorkProject[] }) {
   const [debug, setDebug] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { ArchivePage } from "@/components/archive-page";
+import { MobileAbout } from "@/components/mobile/mobile-about";
+import { Responsive } from "@/components/mobile/responsive";
+import { BIO } from "./bio-text";
 import { Hablemos } from "./bio-copy";
 import { ClientsMarquee } from "./clients-marquee";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
@@ -13,12 +16,6 @@ export const metadata: Metadata = {
 const body: CSSProperties = { fontFamily: UNICA_SANS, fontWeight: 400 };
 const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400 };
 
-const BIO = [
-  "Soy Laia, directora de arte y diseñadora gráfica. Construyo identidades, campañas y universos visuales con concepto e intención.",
-  "Mi terreno es la dirección de arte y el liderazgo de equipos creativos desde hace más de 5 años: desde el branding y el packaging hasta cualquier canal donde se exprese la marca. Traduzco conceptos en campañas y shootings con una gran atención al detalle en set, buscando siempre la coherencia, conectar con la sensibilidad y el propósito de la marca.",
-  "Si tienes un proyecto entre manos, hablemos.",
-];
-
 const para: CSSProperties = {
   ...body,
   fontSize: "clamp(18px, 1.9vw, 28px)",
@@ -29,6 +26,10 @@ const para: CSSProperties = {
 };
 
 export default function AboutPage() {
+  return <Responsive mobile={<MobileAbout bio={BIO} />} desktop={<AboutDesktop />} />;
+}
+
+function AboutDesktop() {
   return (
     <ArchivePage growContent={false}>
       {/* Bio a la izquierda con marcador (About) colgado + sangría */}
