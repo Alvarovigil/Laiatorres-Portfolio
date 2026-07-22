@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 import { videoEmbed } from "@/lib/video";
@@ -115,16 +115,14 @@ export function MobileFigure({ media, eager = false }: { media: MobileMedia; eag
   if (media.kind === "video") {
     const embed = videoEmbed(media.url, media.videoMode);
     if (embed.type === "file") {
+      if (embed.ambient) return <AmbientVideo src={embed.src} />;
       return (
         <video
           src={embed.src}
           style={{ width: "100%", height: "auto", display: "block", border: 0 }}
           playsInline
           preload="metadata"
-          controls={!embed.ambient}
-          autoPlay={embed.ambient}
-          muted={embed.ambient}
-          loop={embed.ambient}
+          controls
         />
       );
     }
@@ -147,6 +145,55 @@ export function MobileFigure({ media, eager = false }: { media: MobileMedia; eag
       loading={eager ? "eager" : "lazy"}
       decoding="async"
       style={{ width: "100%", height: "auto", display: "block" }}
+    />
+  );
+}
+
+// Vídeo de ambiente (autoplay silencioso en bucle) endurecido para móvil:
+//
+//  · `muted` se fuerza por propiedad además de por atributo: React no siempre
+//    emite el atributo en el HTML del servidor, e iOS Safari se niega a hacer
+//    autoplay si no lo ve → el vídeo se quedaba en negro.
+//  · Solo se pide reproducir cuando el vídeo entra en pantalla, así no compiten
+//    varias descargas a la vez por el ancho de banda del móvil.
+//  · Si el navegador rechaza el autoplay (Modo de Bajo Consumo, Ahorro de
+//    Datos), en lugar de dejar un hueco negro se muestran los controles para
+//    que se pueda reproducir a mano.
+function AmbientVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [needsTap, setNeedsTap] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true; // imprescindible para el autoplay en iOS
+    el.defaultMuted = true;
+
+    const tryPlay = () => {
+      el.play().then(
+        () => setNeedsTap(false),
+        () => setNeedsTap(true), // autoplay denegado → controles manuales
+      );
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? tryPlay() : el.pause()),
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      style={{ width: "100%", height: "auto", display: "block", border: 0, background: "#f2f2f2" }}
+      playsInline
+      muted
+      loop
+      preload="metadata"
+      controls={needsTap}
     />
   );
 }
