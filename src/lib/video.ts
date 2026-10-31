@@ -20,6 +20,12 @@ function vimeoId(url: string): string | null {
 
 const FILE_RE = /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i;
 
+// ¿La URL es un archivo de vídeo (no un embed)? Sirve para las imágenes de la
+// home, que guardan solo la URL.
+export function isVideoFile(url: string): boolean {
+  return FILE_RE.test(url);
+}
+
 export function videoEmbed(url: string, mode: VideoMode): VideoEmbed {
   const ambient = mode === "ambient";
 

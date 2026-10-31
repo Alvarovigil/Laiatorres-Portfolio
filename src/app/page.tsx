@@ -1,4 +1,5 @@
 import { listPublishedProjects } from "@/db/queries";
+import { isVideoFile } from "@/lib/video";
 import { HomeView2, type WorkProject } from "./home-view-2";
 
 // Selección manual de medios para la home, por proyecto (orden visual 1,2,3).
@@ -8,6 +9,12 @@ const HOME_MEDIA: Record<string, number[]> = {
   "palau-fugit": [0, 1], // solo 2 imágenes
   relats: [0, 13], // vídeo hero + stickers (evita el vídeo largo de la landing)
 };
+
+// Medio de la home elegido en el admin (portada o foto 2): imagen o vídeo en
+// bucle, según la extensión de la URL.
+function homeMedia(url: string): WorkProject["media"][number] {
+  return { url, kind: isVideoFile(url) ? "video" : "image", videoMode: "ambient" };
+}
 
 export default async function Home() {
   const projects = await listPublishedProjects();
@@ -23,9 +30,11 @@ export default async function Home() {
           const img = p.images[idx];
           if (img) media.push({ url: img.url, kind: img.kind, videoMode: img.videoMode });
         }
+        // La portada del admin manda sobre la selección manual (izquierda).
+        if (p.coverUrl) media.splice(0, 1, homeMedia(p.coverUrl));
       } else {
         // Por defecto: portada (si hay) + primeras imágenes/vídeos.
-        if (p.coverUrl) media.push({ url: p.coverUrl, kind: "image", videoMode: "ambient" });
+        if (p.coverUrl) media.push(homeMedia(p.coverUrl));
         for (const i of p.images) {
           if (media.length >= 2) break;
           if (media.some((m) => m.url === i.url)) continue;
@@ -33,7 +42,7 @@ export default async function Home() {
         }
       }
       // Foto 2 elegida en el admin: sustituye a la de la derecha.
-      if (p.secondCoverUrl) media.splice(1, 1, { url: p.secondCoverUrl, kind: "image", videoMode: "ambient" });
+      if (p.secondCoverUrl) media.splice(1, 1, homeMedia(p.secondCoverUrl));
       return {
         slug: p.slug,
         name: p.name,

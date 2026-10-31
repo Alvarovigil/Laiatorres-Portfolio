@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type DragEvent } from "react";
+import { upload } from "@vercel/blob/client";
 import { Button } from "@/components/ui/button";
 import type { Collab, CreditGroups, ImageAlign, ImageLayout, VideoMode } from "@/db/schema";
 import { slugify } from "@/lib/slug";
+import { isVideoFile } from "@/lib/video";
 import { cn } from "@/lib/utils";
 import { saveProject, type ImageInput, type ProjectInput } from "../projects-actions";
 
@@ -122,6 +124,9 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [chromeBottom, setChromeBottom] = useState(initial.chromeBottom);
   const [coverUrl, setCoverUrl] = useState(initial.coverUrl);
   const [coverUploading, setCoverUploading] = useState(false);
+  // Progreso (0–100) de la subida de un vídeo de la home, por campo.
+  const [coverProgress, setCoverProgress] = useState<number | null>(null);
+  const [secondProgress, setSecondProgress] = useState<number | null>(null);
   const [secondCoverUrl, setSecondCoverUrl] = useState(initial.secondCoverUrl);
   const [secondUploading, setSecondUploading] = useState(false);
   const [category, setCategory] = useState(initial.category);
@@ -243,24 +248,45 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     }
   }
 
-  // Sube una de las dos imágenes de la home (portada o foto 2).
+  // Sube uno de los dos medios de la home (portada o foto 2). Las imágenes
+  // pasan por /api/admin/upload; los vídeos van directos a Blob (superan el
+  // límite de cuerpo de las funciones) con un permiso de /api/admin/upload-video.
   async function uploadCover(file: File, which: "cover" | "second") {
-    if (!file.type.startsWith("image/")) return;
+    const isVideo = file.type.startsWith("video/");
+    if (!isVideo && !file.type.startsWith("image/")) return;
     const setUploading = which === "cover" ? setCoverUploading : setSecondUploading;
+    const setProgress = which === "cover" ? setCoverProgress : setSecondProgress;
     setUploading(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("slug", `${effectiveSlug || "tmp"}-cover`);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
-      const { url } = await res.json();
+      const folder = `${slugify(effectiveSlug) || "tmp"}-cover`;
+      let url: string;
+      if (isVideo) {
+        const name = slugify(file.name.replace(/\.[^.]+$/, "")) || "video";
+        const ext = (file.name.match(/\.[^.]+$/)?.[0] ?? ".mp4").toLowerCase();
+        setProgress(0);
+        const blob = await upload(`projects/${folder}/${name}${ext}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/upload-video",
+          contentType: file.type,
+          multipart: true,
+          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        });
+        url = blob.url;
+      } else {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("slug", folder);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+        if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
+        url = (await res.json()).url;
+      }
       (which === "cover" ? setCoverUrl : setSecondCoverUrl)(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al subir la imagen de la home");
+      setError(e instanceof Error ? e.message : "Error al subir el medio de la home");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   }
 
@@ -488,17 +514,19 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
           title="Portada (home)"
           url={coverUrl}
           uploading={coverUploading}
+          progress={coverProgress}
           onPick={(f) => uploadCover(f, "cover")}
           onClear={() => setCoverUrl("")}
-          hint="Imagen y nombre que aparecen en la home (a la izquierda). Si la dejas vacía, se usa la primera imagen de la galería."
+          hint="Imagen o vídeo (en bucle, sin sonido) y nombre que aparecen en la home, a la izquierda. Si lo dejas vacío, se usa la primera imagen de la galería."
         />
         <CoverPicker
           title="Foto 2 (home)"
           url={secondCoverUrl}
           uploading={secondUploading}
+          progress={secondProgress}
           onPick={(f) => uploadCover(f, "second")}
           onClear={() => setSecondCoverUrl("")}
-          hint="Segunda imagen del proyecto en la home (a la derecha). Si la dejas vacía, se usa la siguiente de la galería."
+          hint="Segunda imagen o vídeo del proyecto en la home, a la derecha. Si lo dejas vacío, se usa la siguiente de la galería."
         />
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-1.5">
@@ -900,6 +928,7 @@ function CoverPicker({
   title,
   url,
   uploading,
+  progress,
   onPick,
   onClear,
   hint,
@@ -907,6 +936,7 @@ function CoverPicker({
   title: string;
   url: string;
   uploading: boolean;
+  progress: number | null;
   onPick: (file: File) => void;
   onClear: () => void;
   hint: string;
@@ -917,17 +947,19 @@ function CoverPicker({
       <span className={label}>{title}</span>
       <div className="flex items-center gap-3">
         <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded border border-border bg-muted">
-          {url ? (
+          {url && isVideoFile(url) ? (
+            <video src={url} muted loop autoPlay playsInline className={`h-full w-full object-cover ${uploading ? "opacity-50" : ""}`} />
+          ) : url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={url} alt="" className={`h-full w-full object-cover ${uploading ? "opacity-50" : ""}`} />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-              sin imagen
+              vacío
             </div>
           )}
         </div>
         <button onClick={() => ref.current?.click()} className="text-sm text-muted-foreground hover:text-foreground">
-          {uploading ? "Subiendo…" : url ? "Cambiar" : "Subir imagen"}
+          {uploading ? (progress !== null ? `Subiendo… ${progress}%` : "Subiendo…") : url ? "Cambiar" : "Subir imagen o vídeo"}
         </button>
         {url ? (
           <button onClick={onClear} className="text-sm text-destructive/80 hover:text-destructive">
@@ -937,7 +969,7 @@ function CoverPicker({
         <input
           ref={ref}
           type="file"
-          accept="image/*"
+          accept="image/*,video/mp4,video/webm,video/quicktime"
           hidden
           onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])}
         />
