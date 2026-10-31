@@ -18,6 +18,7 @@ export default function NewProjectPage() {
         collabs: [],
         credits: [],
         published: false,
+        comingSoon: false,
         images: [],
       }}
     />

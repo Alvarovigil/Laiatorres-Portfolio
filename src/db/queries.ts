@@ -9,7 +9,7 @@ export async function listProjects(): Promise<Project[]> {
   return db.select().from(projects).orderBy(asc(projects.sortOrder), asc(projects.createdAt));
 }
 
-// Lista pública (solo publicados) con sus imágenes.
+// Lista pública (publicados, incluidos los «próximamente») con sus imágenes.
 export async function listPublishedProjects(): Promise<ProjectWithImages[]> {
   const rows = await db.query.projects.findMany({
     where: eq(projects.published, true),

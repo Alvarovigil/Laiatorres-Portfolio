@@ -31,7 +31,15 @@ export default async function Home() {
           media.push({ url: i.url, kind: i.kind, videoMode: i.videoMode });
         }
       }
-      return { slug: p.slug, name: p.name, category: p.category, year: p.year, homeCaption: p.homeCaption, media };
+      return {
+        slug: p.slug,
+        name: p.name,
+        category: p.category,
+        year: p.year,
+        homeCaption: p.homeCaption,
+        comingSoon: p.comingSoon,
+        media,
+      };
     })
     .filter((p) => p.media.length > 0);
 

@@ -25,6 +25,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         collabs: project.collabs,
         credits: project.credits,
         published: project.published,
+        comingSoon: project.comingSoon,
         images: project.images.map((i) => ({
           url: i.url,
           kind: i.kind,

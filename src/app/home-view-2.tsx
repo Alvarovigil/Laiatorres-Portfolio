@@ -11,7 +11,15 @@ import { UNICA_MONO, UNICA_SANS } from "@/lib/unica";
 import { videoEmbed } from "@/lib/video";
 
 export type WorkMedia = { url: string; kind: "image" | "video"; videoMode: "ambient" | "player" };
-export type WorkProject = { slug: string; name: string; category: string; year: string; homeCaption: string; media: WorkMedia[] };
+export type WorkProject = {
+  slug: string;
+  name: string;
+  category: string;
+  year: string;
+  homeCaption: string;
+  comingSoon: boolean;
+  media: WorkMedia[];
+};
 
 const sans: CSSProperties = { fontFamily: UNICA_SANS, fontWeight: 400, fontStyle: "normal" };
 const mono: CSSProperties = { fontFamily: UNICA_MONO, fontWeight: 400, fontStyle: "normal" };
@@ -45,9 +53,10 @@ function Media({ m, aspect }: { m: WorkMedia; aspect?: string }) {
 
 // Una imagen de la pareja, en su mitad (1fr) de la banda, con su número de
 // depuración opcional. La columna desfasada lleva marginTop = STAGGER.
-function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: number; debug: boolean; offset: boolean; onOpen: () => void; caption?: WorkProject }) {
+// Sin onOpen (proyecto «próximamente») la imagen no es clicable.
+function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: number; debug: boolean; offset: boolean; onOpen?: () => void; caption?: WorkProject }) {
   return (
-    <div onClick={onOpen} style={{ position: "relative", cursor: "pointer", marginTop: offset ? STAGGER : undefined }}>
+    <div onClick={onOpen} style={{ position: "relative", cursor: onOpen ? "pointer" : "default", marginTop: offset ? STAGGER : undefined }}>
       {debug ? (
         <span style={{ ...mono, position: "absolute", top: "8px", left: "8px", zIndex: 5, background: "#000", color: "#fff", fontSize: "13px", lineHeight: 1, padding: "4px 7px", borderRadius: "4px" }}>
           {num}
@@ -58,7 +67,9 @@ function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: n
       {caption ? (
         <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginTop: "12px" }}>
           <span style={{ ...sans, fontSize: "13px", color: "#000", textTransform: "uppercase" }}>{caption.name}</span>
-          {caption.homeCaption ? (
+          {caption.comingSoon ? (
+            <span style={{ ...label, textTransform: "uppercase" }}>Próximamente</span>
+          ) : caption.homeCaption ? (
             <span style={{ ...label, textTransform: "uppercase" }}>{caption.homeCaption}</span>
           ) : (
             <>
@@ -79,13 +90,14 @@ function Half({ m, num, debug, offset, onOpen, caption }: { m: WorkMedia; num: n
 // va desfasada hacia abajo (mirror) → zigzag tipo Palau, pero más grande.
 function Cluster({ p, baseNum, mirror, debug, onOpen }: { p: WorkProject; baseNum: number; mirror: boolean; debug: boolean; onOpen: () => void }) {
   const [a, b] = p.media;
+  const open = p.comingSoon ? undefined : onOpen;
   return (
     <div style={{ marginBottom: "12vw", display: "grid", gridTemplateColumns: "repeat(12, 1fr)", columnGap: "18px", alignItems: "start" }}>
       <div style={{ gridColumn: "1 / 7" }}>
-        {a ? <Half m={a} num={baseNum + 1} debug={debug} offset={mirror} onOpen={onOpen} caption={p} /> : null}
+        {a ? <Half m={a} num={baseNum + 1} debug={debug} offset={mirror} onOpen={open} caption={p} /> : null}
       </div>
       <div style={{ gridColumn: "7 / 13" }}>
-        {b ? <Half m={b} num={baseNum + 2} debug={debug} offset={!mirror} onOpen={onOpen} /> : null}
+        {b ? <Half m={b} num={baseNum + 2} debug={debug} offset={!mirror} onOpen={open} /> : null}
       </div>
     </div>
   );

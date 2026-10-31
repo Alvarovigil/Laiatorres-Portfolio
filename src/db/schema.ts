@@ -41,6 +41,8 @@ export const projects = pgTable("projects", {
   // al renderizar, pero guardamos sortOrder para poder reordenar.
   sortOrder: integer("sort_order").notNull().default(0),
   published: boolean("published").notNull().default(false),
+  // Próximamente: sale en la home como «Próximamente», sin enlace, y su ficha no se abre.
+  comingSoon: boolean("coming_soon").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -45,6 +45,7 @@ export type ProjectInput = {
   collabs: Collab[];
   credits: CreditGroups;
   published: boolean;
+  comingSoon: boolean;
   images: ImageInput[];
 };
 
@@ -107,6 +108,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         collabs,
         credits,
         published: input.published,
+        comingSoon: input.comingSoon,
         updatedAt: new Date(),
       })
       .where(eq(projects.id, input.id));
@@ -141,6 +143,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       collabs,
       credits,
       published: input.published,
+      comingSoon: input.comingSoon,
       sortOrder: nextOrder,
     })
     .returning({ id: projects.id });
@@ -195,6 +198,13 @@ export async function setPublished(id: string, published: boolean): Promise<void
   await requireAuth();
   await db.update(projects).set({ published, updatedAt: new Date() }).where(eq(projects.id, id));
   revalidatePath("/admin");
+}
+
+export async function setComingSoon(id: string, comingSoon: boolean): Promise<void> {
+  await requireAuth();
+  await db.update(projects).set({ comingSoon, updatedAt: new Date() }).where(eq(projects.id, id));
+  revalidatePath("/admin");
+  revalidatePath("/");
 }
 
 // Reordena todo el archivo según el array de ids recibido.

@@ -19,10 +19,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
 
   const [project, published] = await Promise.all([getProjectBySlug(slug), listPublishedProjects()]);
-  if (!project || !project.published) notFound();
+  // «Próximamente» no es navegable: ni ficha ni siguiente proyecto.
+  if (!project || !project.published || project.comingSoon) notFound();
 
-  const idx = published.findIndex((p) => p.id === project.id);
-  const next = published[(idx + 1) % published.length] ?? project;
+  const open = published.filter((p) => !p.comingSoon);
+  const idx = open.findIndex((p) => p.id === project.id);
+  const next = open[(idx + 1) % open.length] ?? project;
 
   // La descripción se parte en párrafos por líneas en blanco.
   const about = project.description

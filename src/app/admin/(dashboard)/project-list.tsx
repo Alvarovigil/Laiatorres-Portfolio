@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { Project } from "@/db/schema";
-import { deleteProject, reorderProjects, setPublished } from "../projects-actions";
+import { deleteProject, reorderProjects, setComingSoon, setPublished } from "../projects-actions";
 
 export function ProjectList({ projects }: { projects: Project[] }) {
   const [items, setItems] = useState(projects);
@@ -21,6 +21,11 @@ export function ProjectList({ projects }: { projects: Project[] }) {
   function togglePublish(p: Project) {
     setItems((prev) => prev.map((x) => (x.id === p.id ? { ...x, published: !x.published } : x)));
     startTransition(() => setPublished(p.id, !p.published));
+  }
+
+  function toggleComingSoon(p: Project) {
+    setItems((prev) => prev.map((x) => (x.id === p.id ? { ...x, comingSoon: !x.comingSoon } : x)));
+    startTransition(() => setComingSoon(p.id, !p.comingSoon));
   }
 
   function remove(p: Project) {
@@ -68,6 +73,17 @@ export function ProjectList({ projects }: { projects: Project[] }) {
             }`}
           >
             {p.published ? "Publicado" : "Borrador"}
+          </button>
+
+          <button
+            onClick={() => toggleComingSoon(p)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11.5px] font-medium ${
+              p.comingSoon
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {p.comingSoon ? "Próximamente: sí" : "Próximamente: no"}
           </button>
 
           <Link

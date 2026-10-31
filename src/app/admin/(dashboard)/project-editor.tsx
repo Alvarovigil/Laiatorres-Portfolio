@@ -100,6 +100,7 @@ export type EditorInitial = {
   collabs: Collab[];
   credits: CreditGroups;
   published: boolean;
+  comingSoon: boolean;
   images: ImageInput[];
 };
 
@@ -128,6 +129,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [agency, setAgency] = useState(initial.agency);
   const [collabs, setCollabs] = useState<Collab[]>(initial.collabs);
   const [published, setPublished] = useState(initial.published);
+  const [comingSoon, setComingSoon] = useState(initial.comingSoon);
   const [credits, setCredits] = useState<CreditGroups>(
     initial.credits.length ? initial.credits : [[{ label: "", value: "" }]],
   );
@@ -404,6 +406,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       collabs,
       credits,
       published,
+      comingSoon,
       images,
     };
     startTransition(async () => {
@@ -423,6 +426,10 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
             Publicado
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" checked={comingSoon} onChange={(e) => setComingSoon(e.target.checked)} />
+            Próximamente
           </label>
           <Button onClick={save} disabled={pending}>
             {pending ? "Guardando…" : "Guardar"}

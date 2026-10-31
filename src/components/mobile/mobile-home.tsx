@@ -47,25 +47,9 @@ export function MobileHome({
         {work.map((p, i) => {
           const cover = p.media[0];
           if (!cover) return null;
-          return (
-            <a
-              key={p.slug}
-              href={`/project/${p.slug}`}
-              onClick={(e) => {
-                // Enlace real (accesible y abrible en pestaña nueva), pero el
-                // clic normal usa la transición del sitio.
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                e.preventDefault();
-                navigate(`/project/${p.slug}`);
-              }}
-              style={{
-                display: "block",
-                marginTop: i === 0 ? 0 : "176px",
-                textDecoration: "none",
-                color: "inherit",
-                WebkitTapHighlightColor: "transparent",
-              }}
-            >
+          // «Próximamente»: se muestra, pero sin enlace ni acción.
+          const inner = (
+            <>
               <MobileFigure media={{ ...cover, alt: p.name }} eager={i === 0} />
               <div
                 style={{
@@ -80,9 +64,39 @@ export function MobileHome({
               >
                 <span style={{ ...sans, fontSize: "12px", color: "#000", textTransform: "uppercase" }}>{p.name}</span>
                 <span style={{ ...label, textAlign: "right" }}>
-                  {p.homeCaption || [p.category, p.year].filter(Boolean).join(" · ")}
+                  {p.comingSoon ? "Próximamente" : p.homeCaption || [p.category, p.year].filter(Boolean).join(" · ")}
                 </span>
               </div>
+            </>
+          );
+          const style = {
+            display: "block",
+            marginTop: i === 0 ? 0 : "176px",
+            textDecoration: "none",
+            color: "inherit",
+            WebkitTapHighlightColor: "transparent",
+          };
+          if (p.comingSoon) {
+            return (
+              <div key={p.slug} style={style}>
+                {inner}
+              </div>
+            );
+          }
+          return (
+            <a
+              key={p.slug}
+              href={`/project/${p.slug}`}
+              onClick={(e) => {
+                // Enlace real (accesible y abrible en pestaña nueva), pero el
+                // clic normal usa la transición del sitio.
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                e.preventDefault();
+                navigate(`/project/${p.slug}`);
+              }}
+              style={style}
+            >
+              {inner}
             </a>
           );
         })}
