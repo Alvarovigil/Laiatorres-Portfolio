@@ -115,6 +115,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
 
     await replaceImages(input.id, imgs);
     revalidatePath("/admin");
+    revalidatePath("/");
     revalidatePath(`/project/${slug}`);
     return { ok: true, id: input.id, slug };
   }
@@ -150,6 +151,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
 
   await replaceImages(created.id, imgs);
   revalidatePath("/admin");
+  revalidatePath("/");
   revalidatePath(`/project/${slug}`);
   return { ok: true, id: created.id, slug };
 }
@@ -192,12 +194,14 @@ export async function deleteProject(id: string): Promise<void> {
   await deleteBlobs(imgs.map((i) => i.url));
   await db.delete(projects).where(eq(projects.id, id)); // cascade borra images
   revalidatePath("/admin");
+  revalidatePath("/");
 }
 
 export async function setPublished(id: string, published: boolean): Promise<void> {
   await requireAuth();
   await db.update(projects).set({ published, updatedAt: new Date() }).where(eq(projects.id, id));
   revalidatePath("/admin");
+  revalidatePath("/");
 }
 
 export async function setComingSoon(id: string, comingSoon: boolean): Promise<void> {
@@ -216,6 +220,7 @@ export async function reorderProjects(orderedIds: string[]): Promise<void> {
     ),
   );
   revalidatePath("/admin");
+  revalidatePath("/");
 }
 
 // Borra blobs de Vercel; ignora los que no estén alojados allí (p.ej. /projects
