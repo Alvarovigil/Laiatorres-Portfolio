@@ -229,13 +229,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       };
       setItems((prev) => [...prev, placeholder]);
 
-      const form = new FormData();
-      form.append("file", file);
-      form.append("slug", effectiveSlug || "tmp");
       try {
-        const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-        if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
-        const { url } = await res.json();
+        const url = await uploadToBlob(file, slugify(effectiveSlug) || "tmp");
         setItems((prev) =>
           prev.map((it) =>
             it.kind === "image" && it.localUrl === localUrl ? { ...it, url, uploading: false } : it,
@@ -248,9 +243,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     }
   }
 
-  // Sube uno de los dos medios de la home (portada o foto 2). Las imágenes
-  // pasan por /api/admin/upload; los vídeos van directos a Blob (superan el
-  // límite de cuerpo de las funciones) con un permiso de /api/admin/upload-video.
+  // Sube uno de los dos medios de la home (portada o foto 2): imagen o vídeo.
   async function uploadCover(file: File, which: "cover" | "second") {
     const isVideo = file.type.startsWith("video/");
     if (!isVideo && !file.type.startsWith("image/")) return;
@@ -259,28 +252,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     setUploading(true);
     setError(null);
     try {
-      const folder = `${slugify(effectiveSlug) || "tmp"}-cover`;
-      let url: string;
-      if (isVideo) {
-        const name = slugify(file.name.replace(/\.[^.]+$/, "")) || "video";
-        const ext = (file.name.match(/\.[^.]+$/)?.[0] ?? ".mp4").toLowerCase();
-        setProgress(0);
-        const blob = await upload(`projects/${folder}/${name}${ext}`, file, {
-          access: "public",
-          handleUploadUrl: "/api/admin/upload-video",
-          contentType: file.type,
-          multipart: true,
-          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
-        });
-        url = blob.url;
-      } else {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("slug", folder);
-        const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-        if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
-        url = (await res.json()).url;
-      }
+      setProgress(0);
+      const url = await uploadToBlob(file, `${slugify(effectiveSlug) || "tmp"}-cover`, setProgress);
       (which === "cover" ? setCoverUrl : setSecondCoverUrl)(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir el medio de la home");
@@ -921,6 +894,22 @@ function GripIcon({ className = "" }: { className?: string }) {
       <circle cx="15" cy="18" r="1.4" />
     </svg>
   );
+}
+
+// Sube un archivo directo del navegador a Vercel Blob (sin el límite de 4,5 MB
+// de las funciones) y devuelve su URL pública. /api/admin/blob-upload firma el
+// permiso solo con sesión iniciada. Los archivos grandes van por partes.
+async function uploadToBlob(file: File, folder: string, onProgress?: (percentage: number) => void) {
+  const name = slugify(file.name.replace(/\.[^.]+$/, "")) || "archivo";
+  const ext = (file.name.match(/\.[^.]+$/)?.[0] ?? "").toLowerCase();
+  const blob = await upload(`projects/${folder}/${name}${ext}`, file, {
+    access: "public",
+    handleUploadUrl: "/api/admin/blob-upload",
+    contentType: file.type,
+    multipart: file.size > 8 * 1024 * 1024,
+    onUploadProgress: onProgress ? ({ percentage }) => onProgress(Math.round(percentage)) : undefined,
+  });
+  return blob.url;
 }
 
 // Selector de una imagen de la home: miniatura, subir/cambiar y quitar.
