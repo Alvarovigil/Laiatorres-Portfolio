@@ -6,6 +6,7 @@ import { HomeView2, type WorkProject } from "./home-view-2";
 const HOME_MEDIA: Record<string, number[]> = {
   "julia-perfumeries": [17, 4],
   "palau-fugit": [0, 1], // solo 2 imágenes
+  relats: [0, 13], // vídeo hero + stickers (evita el vídeo largo de la landing)
 };
 
 export default async function Home() {
