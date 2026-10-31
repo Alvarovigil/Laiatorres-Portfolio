@@ -104,9 +104,12 @@ export function ProjectTaqta({
   // se va apilando bajo el nombre del proyecto.
   let _row = 1;
   const blockRows: { b: Block; row: number }[] = [];
-  const labelRows: { label: string; start: number }[] = [];
-  sections.forEach((sec) => {
-    if (sec.label) labelRows.push({ label: sec.label, start: _row });
+  const labelRows: { label: string; start: number; id: string; offset: number }[] = [];
+  sections.forEach((sec, si) => {
+    // Cada etiqueta enlaza con la fila donde empieza su sección. El offset
+    // coincide con su hueco pegado, así la imagen queda a la altura de la etiqueta.
+    if (sec.label)
+      labelRows.push({ label: sec.label, start: _row, id: `seccion-${si}`, offset: SECTION_BASE + si * SECTION_STEP });
     sec.blocks.forEach((b) => {
       blockRows.push({ b, row: _row });
       _row += 1;
@@ -212,14 +215,21 @@ export function ProjectTaqta({
         {/* Separadores de sección — apilados bajo el nombre del proyecto.
             En las secciones con hueco delante, la etiqueta arranca a la altura
             de la imagen (bajo el hueco), no encima de él. */}
-        {labelRows.map(({ label: l, start }, si) => (
+        {labelRows.map(({ label: l, start, id }, si) => (
           <div
             key={`sec-${si}`}
             style={{ gridColumn: "1 / 4", gridRow: `${start} / ${lastRow}`, marginTop: sectionStarts.has(start) ? `${SECTION_GAP}px` : undefined }}
           >
-            <div
+            <a
+              href={`#${id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                window.history.replaceState(null, "", `#${id}`);
+              }}
               style={{
                 ...sans,
+                display: "block",
                 position: "sticky",
                 top: `${SECTION_BASE + si * SECTION_STEP}px`,
                 zIndex: 30,
@@ -228,18 +238,29 @@ export function ProjectTaqta({
                 color: "#a5a5a5",
                 textTransform: "uppercase",
                 whiteSpace: "nowrap",
+                textDecoration: "none",
+                cursor: "pointer",
               }}
             >
               {l}
-            </div>
+            </a>
           </div>
         ))}
 
-        {/* Filas de imágenes (cols 4–12) */}
-        {blockRows.map(({ b, row }, i) => (
+        {/* Filas de imágenes (cols 4–12). La fila que abre una sección lleva su
+            id y el mismo offset que su etiqueta, para el salto desde el índice. */}
+        {blockRows.map(({ b, row }, i) => {
+          const section = labelRows.find((l) => l.start === row);
+          return (
           <div
             key={`b-${i}`}
-            style={{ gridColumn: "4 / 13", gridRow: row, marginTop: sectionStarts.has(row) ? `${SECTION_GAP}px` : undefined }}
+            id={section?.id}
+            style={{
+              gridColumn: "4 / 13",
+              gridRow: row,
+              marginTop: sectionStarts.has(row) ? `${SECTION_GAP}px` : undefined,
+              scrollMarginTop: section ? `${section.offset}px` : undefined,
+            }}
           >
             {b.type === "wide" ? (
               <Cell media={b.media} />
@@ -256,7 +277,8 @@ export function ProjectTaqta({
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── Pie: agencia + siguiente (mismo tramo que la galería: col 4→12) ── */}
