@@ -37,6 +37,9 @@ export type ProjectInput = {
   chromeCenter: string;
   chromeBottom: string;
   coverUrl: string;
+  // Opcional: un editor cargado antes de existir el campo no lo envía, y
+  // entonces se conserva el valor guardado.
+  secondCoverUrl?: string;
   category: string;
   year: string;
   homeCaption: string;
@@ -100,6 +103,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
         chromeCenter: input.chromeCenter.trim(),
         chromeBottom: input.chromeBottom.trim(),
         coverUrl: input.coverUrl.trim(),
+        ...(input.secondCoverUrl !== undefined ? { secondCoverUrl: input.secondCoverUrl.trim() } : {}),
         category: input.category.trim(),
         year: input.year.trim(),
         homeCaption: input.homeCaption.trim(),
@@ -136,6 +140,7 @@ export async function saveProject(input: ProjectInput): Promise<SaveResult> {
       chromeCenter: input.chromeCenter.trim(),
       chromeBottom: input.chromeBottom.trim(),
       coverUrl: input.coverUrl.trim(),
+      secondCoverUrl: (input.secondCoverUrl ?? "").trim(),
       category: input.category.trim(),
       year: input.year.trim(),
       homeCaption: input.homeCaption.trim(),

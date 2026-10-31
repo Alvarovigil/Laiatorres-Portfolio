@@ -32,6 +32,8 @@ export default async function Home() {
           media.push({ url: i.url, kind: i.kind, videoMode: i.videoMode });
         }
       }
+      // Foto 2 elegida en el admin: sustituye a la de la derecha.
+      if (p.secondCoverUrl) media.splice(1, 1, { url: p.secondCoverUrl, kind: "image", videoMode: "ambient" });
       return {
         slug: p.slug,
         name: p.name,

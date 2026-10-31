@@ -92,6 +92,7 @@ export type EditorInitial = {
   chromeCenter: string;
   chromeBottom: string;
   coverUrl: string;
+  secondCoverUrl: string;
   category: string;
   year: string;
   homeCaption: string;
@@ -121,7 +122,8 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   const [chromeBottom, setChromeBottom] = useState(initial.chromeBottom);
   const [coverUrl, setCoverUrl] = useState(initial.coverUrl);
   const [coverUploading, setCoverUploading] = useState(false);
-  const coverRef = useRef<HTMLInputElement>(null);
+  const [secondCoverUrl, setSecondCoverUrl] = useState(initial.secondCoverUrl);
+  const [secondUploading, setSecondUploading] = useState(false);
   const [category, setCategory] = useState(initial.category);
   const [year, setYear] = useState(initial.year);
   const [homeCaption, setHomeCaption] = useState(initial.homeCaption);
@@ -241,9 +243,11 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
     }
   }
 
-  async function uploadCover(file: File) {
+  // Sube una de las dos imágenes de la home (portada o foto 2).
+  async function uploadCover(file: File, which: "cover" | "second") {
     if (!file.type.startsWith("image/")) return;
-    setCoverUploading(true);
+    const setUploading = which === "cover" ? setCoverUploading : setSecondUploading;
+    setUploading(true);
     setError(null);
     try {
       const form = new FormData();
@@ -252,11 +256,11 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       const res = await fetch("/api/admin/upload", { method: "POST", body: form });
       if (!res.ok) throw new Error((await res.json()).error ?? "Error al subir");
       const { url } = await res.json();
-      setCoverUrl(url);
+      (which === "cover" ? setCoverUrl : setSecondCoverUrl)(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al subir la portada");
+      setError(e instanceof Error ? e.message : "Error al subir la imagen de la home");
     } finally {
-      setCoverUploading(false);
+      setUploading(false);
     }
   }
 
@@ -350,7 +354,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
   // ---- guardar ----
   function save() {
     setError(null);
-    if (isUploading || coverUploading) {
+    if (isUploading || coverUploading || secondUploading) {
       setError("Espera a que terminen de subir las imágenes.");
       return;
     }
@@ -398,6 +402,7 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
       chromeCenter,
       chromeBottom,
       coverUrl,
+      secondCoverUrl,
       category,
       year,
       homeCaption,
@@ -479,39 +484,22 @@ export function ProjectEditor({ initial }: { initial: EditorInitial }) {
 
       {/* Meta de la ficha (V2): portada, categoría, año, servicios */}
       <section className="ad-card grid gap-4 p-6">
-        <div className="grid gap-1.5">
-          <span className={label}>Portada (home)</span>
-          <div className="flex items-center gap-3">
-            <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded border border-border bg-muted">
-              {coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverUrl} alt="" className={`h-full w-full object-cover ${coverUploading ? "opacity-50" : ""}`} />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-                  sin portada
-                </div>
-              )}
-            </div>
-            <button onClick={() => coverRef.current?.click()} className="text-sm text-muted-foreground hover:text-foreground">
-              {coverUploading ? "Subiendo…" : coverUrl ? "Cambiar" : "Subir imagen"}
-            </button>
-            {coverUrl ? (
-              <button onClick={() => setCoverUrl("")} className="text-sm text-destructive/80 hover:text-destructive">
-                Quitar
-              </button>
-            ) : null}
-            <input
-              ref={coverRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => e.target.files?.[0] && uploadCover(e.target.files[0])}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Imagen y nombre que aparecen en la home. Si la dejas vacía, se usa la primera imagen de la galería.
-          </span>
-        </div>
+        <CoverPicker
+          title="Portada (home)"
+          url={coverUrl}
+          uploading={coverUploading}
+          onPick={(f) => uploadCover(f, "cover")}
+          onClear={() => setCoverUrl("")}
+          hint="Imagen y nombre que aparecen en la home (a la izquierda). Si la dejas vacía, se usa la primera imagen de la galería."
+        />
+        <CoverPicker
+          title="Foto 2 (home)"
+          url={secondCoverUrl}
+          uploading={secondUploading}
+          onPick={(f) => uploadCover(f, "second")}
+          onClear={() => setSecondCoverUrl("")}
+          hint="Segunda imagen del proyecto en la home (a la derecha). Si la dejas vacía, se usa la siguiente de la galería."
+        />
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-1.5">
             <span className={label}>Categoría</span>
@@ -904,5 +892,57 @@ function GripIcon({ className = "" }: { className?: string }) {
       <circle cx="9" cy="18" r="1.4" />
       <circle cx="15" cy="18" r="1.4" />
     </svg>
+  );
+}
+
+// Selector de una imagen de la home: miniatura, subir/cambiar y quitar.
+function CoverPicker({
+  title,
+  url,
+  uploading,
+  onPick,
+  onClear,
+  hint,
+}: {
+  title: string;
+  url: string;
+  uploading: boolean;
+  onPick: (file: File) => void;
+  onClear: () => void;
+  hint: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div className="grid gap-1.5">
+      <span className={label}>{title}</span>
+      <div className="flex items-center gap-3">
+        <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded border border-border bg-muted">
+          {url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={url} alt="" className={`h-full w-full object-cover ${uploading ? "opacity-50" : ""}`} />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+              sin imagen
+            </div>
+          )}
+        </div>
+        <button onClick={() => ref.current?.click()} className="text-sm text-muted-foreground hover:text-foreground">
+          {uploading ? "Subiendo…" : url ? "Cambiar" : "Subir imagen"}
+        </button>
+        {url ? (
+          <button onClick={onClear} className="text-sm text-destructive/80 hover:text-destructive">
+            Quitar
+          </button>
+        ) : null}
+        <input
+          ref={ref}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])}
+        />
+      </div>
+      <span className="text-xs text-muted-foreground">{hint}</span>
+    </div>
   );
 }

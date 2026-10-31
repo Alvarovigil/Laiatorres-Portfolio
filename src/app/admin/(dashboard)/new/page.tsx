@@ -10,6 +10,7 @@ export default function NewProjectPage() {
         chromeCenter: "",
         chromeBottom: "",
         coverUrl: "",
+        secondCoverUrl: "",
         category: "",
         year: "",
         homeCaption: "",

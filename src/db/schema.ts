@@ -28,6 +28,9 @@ export const projects = pgTable("projects", {
   // Campos de la ficha V2 (estilo Taqta).
   // Imagen de portada para la home (si está vacía, se usa la primera del proyecto).
   coverUrl: text("cover_url").notNull().default(""),
+  // Segunda imagen del proyecto en la home (la de la derecha). Si está vacía,
+  // se usa la siguiente de la galería.
+  secondCoverUrl: text("second_cover_url").notNull().default(""),
   category: text("category").notNull().default(""),
   year: text("year").notNull().default(""),
   // Pie de imagen en la home (línea libre, p. ej. "IDENTIDAD | PACKAGING - 2024").
